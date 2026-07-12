@@ -3,6 +3,9 @@
 //! 本标量实现是 SIMD 路径（task_008，nightly `std::simd`，ADR-001）的
 //! **真值参照**与最终 fallback。
 
+use std::simd::prelude::SimdFloat;
+use std::simd::Simd;
+
 /// CSR 格式的稀疏级联矩阵（n×n）。
 #[repr(C)]
 pub struct CascadeMatrix {
@@ -77,6 +80,36 @@ pub fn spmv_csr_scalar(x: &[f32], matrix: &CascadeMatrix, y: &mut [f32]) {
             .zip(matrix.values[start..end].iter())
         {
             acc += v * x[col as usize];
+        }
+        *y_i = acc;
+    }
+}
+
+/// SIMD CSR SpMV（nightly `std::simd` 可移植 SIMD，ADR-001）。
+///
+/// LANES=8：`values` 连续装入、`x` 按 `col_idx` 聚集（先入缓冲）、向量乘 + 水平归约；
+/// 不足一块的尾部用标量收尾。`std::simd` 在各平台自动降级
+/// （aarch64 → NEON/SVE，x86_64 → AVX2/AVX-512），**无需运行时硬件检测**
+/// （ADR-001 取代 SPEC §6.2 的 `is_x86_feature_detected!` 分发）。
+/// 标量 fallback / 真值参照见 [`spmv_csr_scalar`]。
+pub fn spmv_csr(x: &[f32], matrix: &CascadeMatrix, y: &mut [f32]) {
+    const LANES: usize = 8;
+    for (y_i, window) in y.iter_mut().zip(matrix.row_ptr.windows(2)) {
+        let start = window[0] as usize;
+        let end = window[1] as usize;
+        let mut acc = 0.0f32;
+        let mut k = start;
+        while k + LANES <= end {
+            let xv: Simd<f32, LANES> =
+                Simd::from_array(core::array::from_fn(|j| x[matrix.col_idx[k + j] as usize]));
+            let vals: Simd<f32, LANES> = Simd::from_slice(&matrix.values[k..k + LANES]);
+            acc += (vals * xv).reduce_sum();
+            k += LANES;
+        }
+        // 标量尾部（不足一块）
+        while k < end {
+            acc += matrix.values[k] * x[matrix.col_idx[k] as usize];
+            k += 1;
         }
         *y_i = acc;
     }
@@ -166,5 +199,30 @@ mod spmv {
         assert_eq!(m.col_idx, vec![1, 0]);
         assert_eq!(m.values, vec![0.5, 0.25]);
         assert_eq!(m.time_lag_us, vec![10, 20]);
+    }
+
+    #[test]
+    fn simd_matches_scalar_all_paths() {
+        // row0: 17 nz（2 块 + 1 尾）；row1: 8 nz（1 块无尾）；row2: 3 nz（仅尾）
+        let n = 18u32;
+        let mut edges = Vec::new();
+        for j in 0..17u32 {
+            edges.push((0, j, (j as f32) * 0.05 + 0.01, j));
+        }
+        for j in 0..8u32 {
+            edges.push((1, j, (j as f32) * 0.1 + 0.02, j));
+        }
+        for j in 0..3u32 {
+            edges.push((2, j, (j as f32) * 0.2 + 0.03, j));
+        }
+        let m = CascadeMatrix::from_edges(n, &edges);
+        let x: Vec<f32> = (0..n).map(|i| (i as f32) * 0.3).collect();
+        let mut ys = vec![0.0f32; n as usize];
+        let mut yv = vec![0.0f32; n as usize];
+        spmv_csr_scalar(&x, &m, &mut ys);
+        spmv_csr(&x, &m, &mut yv);
+        for (i, (&s, &v)) in ys.iter().zip(yv.iter()).enumerate() {
+            assert!((v - s).abs() < 1e-5, "[{i}] simd {v} vs scalar {s}");
+        }
     }
 }

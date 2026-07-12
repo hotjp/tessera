@@ -54,14 +54,19 @@ src/matrix.rs(追加)。x86_64: #[target_feature(enable="avx512f")] unsafe + is_
 
 <!-- 标记完成前，请提供以下证据： -->
 
-- [ ] **实现证明**: 简要说明如何实现
-- [ ] **测试验证**: 如何验证功能正常（测试步骤/截图/命令输出）
-- [ ] **影响范围**: 是否影响其他功能
+- [x] **实现证明**: 按 ADR-001（覆盖任务 requirements 正文的 x86 intrinsics 方案）实现可移植 SIMD。lib.rs 顶部加 `#![feature(portable_simd)]`；matrix.rs 加 `spmv_csr`：LANES=8，values 用 `Simd::from_slice` 连续装入、x 按 col_idx 用 `core::array::from_fn` 聚集入 `Simd::from_array`、向量乘 + `reduce_sum` 水平归约，尾部标量收尾。`std::simd` 编译期自动降级（aarch64→NEON/SVE，x86_64→AVX2/AVX-512），**不用 `is_x86_feature_detected!`**（ADR-001 明确禁用）；标量 fallback/真值参照复用 task_007 `spmv_csr_scalar`。
+- [x] **测试验证**: `cargo test spmv` → 6 passed（含 simd_matches_scalar_all_paths：17/8/3 nz 行覆盖 2块+尾/1块/纯尾）；全套 39 passed；clippy 无告警；fmt 通过。本机 darwin/aarch64 编译运行通过（SIMD→NEON）。
+- [x] **影响范围**: lib.rs 加 unstable feature gate（nightly 钉版已在 rust-toolchain.toml，升级需跑全量回归）；matrix.rs 追加 spmv_csr 不改既有 API。级联推理(后续)可调用 spmv_csr。
+
+### ⚠️ 与 requirements 正文的偏离（ADR-001 授权）
+requirements 正文要求 `is_x86_feature_detected!(avx512f/avx2)` + target_feature intrinsics 分发；**ADR-001 覆盖此方案**：改用 nightly `std::simd` 可移植 SIMD，禁用 x86 专属 intrinsic 与运行时检测。deliverables 正文（「基于 nightly std::simd/portable_simd」「src/lib.rs 顶部 #![feature(portable_simd)]」）与本实现一致。
 
 ### 测试步骤
-1. 
-2. 
-3. 
+1. `cargo test spmv` → 6/6 ok（SIMD==标量<1e-5，覆盖多块/单块/纯尾路径）
+2. `cargo clippy --all-targets` → 无告警
+3. `cargo fmt --check` → exit 0
 
 ### 验证结果
-<!-- 粘贴验证截图、命令输出或测试结果 -->
+- SIMD 路径(spmv_csr) == 标量(spmv_csr_scalar) 逐元素误差<1e-5（17nz 行：2 SIMD 块 + 1 标量尾）
+- aarch64 darwin 编译运行通过（portable_simd 自动降级为 NEON，不依赖 AVX-512）
+- 标量 fallback 始终存在（spmv_csr_scalar）

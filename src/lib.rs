@@ -1,3 +1,5 @@
+#![feature(portable_simd)]
+
 //! Σ⁴-Engine — 确定性微秒级稀疏状态级联推理引擎。
 //!
 //! 热路径核心 crate。实现顺序见 `docs/CLAUDE.md` 第 3 节：

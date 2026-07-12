@@ -180,13 +180,13 @@
       "description": "[T6] CascadeMatrix(CSR) + 标量 SpMV (SPEC §6.2 scalar)",
       "template": "task",
       "priority": "P1",
-      "status": "in_progress",
+      "status": "completed",
       "parent_id": null,
       "output_req": "8k",
       "context_hint": "8k",
       "task_file": "tasks/task_007.md",
       "created_at": "2026-07-10T16:59:36.164477",
-      "updated_at": "2026-07-12T23:32:16.177945",
+      "updated_at": "2026-07-12T23:34:18.112406",
       "dependencies": [
         "task_002"
       ],
@@ -209,13 +209,13 @@
       "description": "[T7] SIMD SpMV + 运行时硬件检测 fallback (SPEC §6.2 SIMD)",
       "template": "task",
       "priority": "P1",
-      "status": "blocked",
+      "status": "in_progress",
       "parent_id": null,
       "output_req": "8k",
       "context_hint": "8k",
       "task_file": "tasks/task_008.md",
       "created_at": "2026-07-10T16:59:36.258046",
-      "updated_at": "2026-07-10T16:59:36.258055",
+      "updated_at": "2026-07-12T23:43:53.245667",
       "dependencies": [
         "task_007"
       ],

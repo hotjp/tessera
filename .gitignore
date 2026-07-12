@@ -1,0 +1,24 @@
+# Rust 构建产物
+/target
+
+# rustfmt 备份
+**/*.rs.bk
+
+# Windows 调试符号
+*.pdb
+
+# macOS
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+
+# Claude Code 本地会话状态（运行时，不入库）
+/.claude/
+
+# LRA 运行时产物（任务定义/状态/模板入库，运行时锁与报告不入库）
+.long-run-agent/locks.json
+.long-run-agent/records/
+.long-run-agent/backup/
+.long-run-agent/reports/

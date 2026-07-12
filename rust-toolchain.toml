@@ -1,0 +1,7 @@
+# Σ⁴-Engine 工具链钉版（见 docs/DECISIONS.md ADR-001）
+# 必须使用 nightly：核心 SpMV 依赖 `#![feature(portable_simd)]`（task_008）。
+# 升级前必须跑全量回归（ADR-001 后果条款）。
+[toolchain]
+channel = "nightly-2026-07-11"
+components = ["rust-src", "rustfmt", "clippy"]
+profile = "default"

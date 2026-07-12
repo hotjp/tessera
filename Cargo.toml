@@ -1,0 +1,25 @@
+[package]
+name = "sigma4-engine"
+version = "0.1.0"
+edition = "2021"
+description = "Σ⁴-Engine: deterministic microsecond sparse state cascade inference engine"
+license = "MIT OR Apache-2.0"
+rust-version = "1.99.0"
+
+[lib]
+name = "sigma4_engine"
+path = "src/lib.rs"
+
+# 基准测试（后续 task 启用，目前仅声明 dev-dep）
+# [[bench]]
+# name = "..."
+# harness = false
+
+[dev-dependencies]
+criterion = "0.5"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+panic = "abort"

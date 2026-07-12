@@ -1,0 +1,358 @@
+{
+  "project_name": "global-capital-players",
+  "created_at": "2026-07-10T16:52:58.166397",
+  "tasks": [
+    {
+      "id": "task_001",
+      "description": "[T0] 项目脚手架 + 基线提交(回滚锚点)",
+      "template": "task",
+      "priority": "P0",
+      "status": "in_progress",
+      "parent_id": null,
+      "output_req": "8k",
+      "context_hint": "8k",
+      "task_file": "tasks/task_001.md",
+      "created_at": "2026-07-10T16:58:46.058112",
+      "updated_at": "2026-07-12T22:33:33.822643",
+      "dependencies": [],
+      "dependency_type": "all",
+      "deadline": null,
+      "ralph": {
+        "iteration": 0,
+        "max_iterations": 7,
+        "quality_checks": {
+          "tests_passed": false,
+          "lint_passed": false,
+          "acceptance_met": false
+        },
+        "issues": [],
+        "optimization_history": []
+      }
+    },
+    {
+      "id": "task_002",
+      "description": "[T1] Entity/DeltaEvent/Relation 内存布局 (SPEC §3.1 §3.4)",
+      "template": "task",
+      "priority": "P0",
+      "status": "blocked",
+      "parent_id": null,
+      "output_req": "8k",
+      "context_hint": "8k",
+      "task_file": "tasks/task_002.md",
+      "created_at": "2026-07-10T16:59:35.664663",
+      "updated_at": "2026-07-10T16:59:35.664674",
+      "dependencies": [
+        "task_001"
+      ],
+      "dependency_type": "all",
+      "deadline": null,
+      "ralph": {
+        "iteration": 0,
+        "max_iterations": 7,
+        "quality_checks": {
+          "tests_passed": false,
+          "lint_passed": false,
+          "acceptance_met": false
+        },
+        "issues": [],
+        "optimization_history": []
+      }
+    },
+    {
+      "id": "task_003",
+      "description": "[T2] Duchi 单纯形投影 + Frobenius 距离 (SPEC §2.1 §2.4)",
+      "template": "task",
+      "priority": "P1",
+      "status": "blocked",
+      "parent_id": null,
+      "output_req": "8k",
+      "context_hint": "8k",
+      "task_file": "tasks/task_003.md",
+      "created_at": "2026-07-10T16:59:35.761938",
+      "updated_at": "2026-07-10T16:59:35.761946",
+      "dependencies": [
+        "task_002"
+      ],
+      "dependency_type": "all",
+      "deadline": null,
+      "ralph": {
+        "iteration": 0,
+        "max_iterations": 7,
+        "quality_checks": {
+          "tests_passed": false,
+          "lint_passed": false,
+          "acceptance_met": false
+        },
+        "issues": [],
+        "optimization_history": []
+      }
+    },
+    {
+      "id": "task_004",
+      "description": "[T3] SimplexCodec 无损编解码 (SPEC §7.1)",
+      "template": "task",
+      "priority": "P1",
+      "status": "blocked",
+      "parent_id": null,
+      "output_req": "8k",
+      "context_hint": "8k",
+      "task_file": "tasks/task_004.md",
+      "created_at": "2026-07-10T16:59:35.884024",
+      "updated_at": "2026-07-10T16:59:35.884032",
+      "dependencies": [
+        "task_003"
+      ],
+      "dependency_type": "all",
+      "deadline": null,
+      "ralph": {
+        "iteration": 0,
+        "max_iterations": 7,
+        "quality_checks": {
+          "tests_passed": false,
+          "lint_passed": false,
+          "acceptance_met": false
+        },
+        "issues": [],
+        "optimization_history": []
+      }
+    },
+    {
+      "id": "task_005",
+      "description": "[T4] 帕累托约束投影 (SPEC §2.5)",
+      "template": "task",
+      "priority": "P1",
+      "status": "blocked",
+      "parent_id": null,
+      "output_req": "8k",
+      "context_hint": "8k",
+      "task_file": "tasks/task_005.md",
+      "created_at": "2026-07-10T16:59:35.977657",
+      "updated_at": "2026-07-10T16:59:35.977664",
+      "dependencies": [
+        "task_003"
+      ],
+      "dependency_type": "all",
+      "deadline": null,
+      "ralph": {
+        "iteration": 0,
+        "max_iterations": 7,
+        "quality_checks": {
+          "tests_passed": false,
+          "lint_passed": false,
+          "acceptance_met": false
+        },
+        "issues": [],
+        "optimization_history": []
+      }
+    },
+    {
+      "id": "task_006",
+      "description": "[T5] 增量环写入 + query_state (SPEC §3.2 §6.1)",
+      "template": "task",
+      "priority": "P0",
+      "status": "blocked",
+      "parent_id": null,
+      "output_req": "8k",
+      "context_hint": "8k",
+      "task_file": "tasks/task_006.md",
+      "created_at": "2026-07-10T16:59:36.076122",
+      "updated_at": "2026-07-10T16:59:36.076132",
+      "dependencies": [
+        "task_002",
+        "task_003"
+      ],
+      "dependency_type": "all",
+      "deadline": null,
+      "ralph": {
+        "iteration": 0,
+        "max_iterations": 7,
+        "quality_checks": {
+          "tests_passed": false,
+          "lint_passed": false,
+          "acceptance_met": false
+        },
+        "issues": [],
+        "optimization_history": []
+      }
+    },
+    {
+      "id": "task_007",
+      "description": "[T6] CascadeMatrix(CSR) + 标量 SpMV (SPEC §6.2 scalar)",
+      "template": "task",
+      "priority": "P1",
+      "status": "blocked",
+      "parent_id": null,
+      "output_req": "8k",
+      "context_hint": "8k",
+      "task_file": "tasks/task_007.md",
+      "created_at": "2026-07-10T16:59:36.164477",
+      "updated_at": "2026-07-10T16:59:36.164487",
+      "dependencies": [
+        "task_002"
+      ],
+      "dependency_type": "all",
+      "deadline": null,
+      "ralph": {
+        "iteration": 0,
+        "max_iterations": 7,
+        "quality_checks": {
+          "tests_passed": false,
+          "lint_passed": false,
+          "acceptance_met": false
+        },
+        "issues": [],
+        "optimization_history": []
+      }
+    },
+    {
+      "id": "task_008",
+      "description": "[T7] SIMD SpMV + 运行时硬件检测 fallback (SPEC §6.2 SIMD)",
+      "template": "task",
+      "priority": "P1",
+      "status": "blocked",
+      "parent_id": null,
+      "output_req": "8k",
+      "context_hint": "8k",
+      "task_file": "tasks/task_008.md",
+      "created_at": "2026-07-10T16:59:36.258046",
+      "updated_at": "2026-07-10T16:59:36.258055",
+      "dependencies": [
+        "task_007"
+      ],
+      "dependency_type": "all",
+      "deadline": null,
+      "ralph": {
+        "iteration": 0,
+        "max_iterations": 7,
+        "quality_checks": {
+          "tests_passed": false,
+          "lint_passed": false,
+          "acceptance_met": false
+        },
+        "issues": [],
+        "optimization_history": []
+      }
+    },
+    {
+      "id": "task_009",
+      "description": "[T8] 级联推理(含脆性阈值) (SPEC §6.3 §2.5)",
+      "template": "task",
+      "priority": "P0",
+      "status": "blocked",
+      "parent_id": null,
+      "output_req": "8k",
+      "context_hint": "8k",
+      "task_file": "tasks/task_009.md",
+      "created_at": "2026-07-10T16:59:36.356843",
+      "updated_at": "2026-07-10T16:59:36.356854",
+      "dependencies": [
+        "task_007",
+        "task_008"
+      ],
+      "dependency_type": "all",
+      "deadline": null,
+      "ralph": {
+        "iteration": 0,
+        "max_iterations": 7,
+        "quality_checks": {
+          "tests_passed": false,
+          "lint_passed": false,
+          "acceptance_met": false
+        },
+        "issues": [],
+        "optimization_history": []
+      }
+    },
+    {
+      "id": "task_010",
+      "description": "[T9] 网络层: TCP + TLS 1.3 + 自定义二进制帧 (SPEC §4.2 §5)",
+      "template": "task",
+      "priority": "P1",
+      "status": "blocked",
+      "parent_id": null,
+      "output_req": "8k",
+      "context_hint": "8k",
+      "task_file": "tasks/task_010.md",
+      "created_at": "2026-07-10T16:59:36.465583",
+      "updated_at": "2026-07-10T16:59:36.465593",
+      "dependencies": [
+        "task_002",
+        "task_006",
+        "task_009"
+      ],
+      "dependency_type": "all",
+      "deadline": null,
+      "ralph": {
+        "iteration": 0,
+        "max_iterations": 7,
+        "quality_checks": {
+          "tests_passed": false,
+          "lint_passed": false,
+          "acceptance_met": false
+        },
+        "issues": [],
+        "optimization_history": []
+      }
+    },
+    {
+      "id": "task_011",
+      "description": "[T10] CSV 加载器: 183 实体基线数据 (docs/global_capital_players_full_index.csv)",
+      "template": "task",
+      "priority": "P2",
+      "status": "blocked",
+      "parent_id": null,
+      "output_req": "8k",
+      "context_hint": "8k",
+      "task_file": "tasks/task_011.md",
+      "created_at": "2026-07-10T16:59:36.553216",
+      "updated_at": "2026-07-10T16:59:36.553225",
+      "dependencies": [
+        "task_006",
+        "task_010"
+      ],
+      "dependency_type": "all",
+      "deadline": null,
+      "ralph": {
+        "iteration": 0,
+        "max_iterations": 7,
+        "quality_checks": {
+          "tests_passed": false,
+          "lint_passed": false,
+          "acceptance_met": false
+        },
+        "issues": [],
+        "optimization_history": []
+      }
+    },
+    {
+      "id": "task_012",
+      "description": "[T11] 跨平台 CI 矩阵 + 架构决策记录(DECISIONS.md)",
+      "template": "task",
+      "priority": "P1",
+      "status": "blocked",
+      "parent_id": null,
+      "output_req": "8k",
+      "context_hint": "8k",
+      "task_file": "tasks/task_012.md",
+      "created_at": "2026-07-12T22:13:21.316221",
+      "updated_at": "2026-07-12T22:13:21.316225",
+      "dependencies": [
+        "task_001",
+        "task_008"
+      ],
+      "dependency_type": "all",
+      "deadline": null,
+      "ralph": {
+        "iteration": 0,
+        "max_iterations": 7,
+        "quality_checks": {
+          "tests_passed": false,
+          "lint_passed": false,
+          "acceptance_met": false
+        },
+        "issues": [],
+        "optimization_history": []
+      }
+    }
+  ]
+}

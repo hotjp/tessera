@@ -54,14 +54,19 @@ src/cascade.rs。复用 matrix::spmv_csr。脆性分支(brittle_coord>0.5)必须
 
 <!-- 标记完成前，请提供以下证据： -->
 
-- [ ] **实现证明**: 简要说明如何实现
-- [ ] **测试验证**: 如何验证功能正常（测试步骤/截图/命令输出）
-- [ ] **影响范围**: 是否影响其他功能
+- [x] **实现证明**: 新建 src/cascade.rs。EntityStateView{coordinates,brittle_threshold,decay_coefficient,time_lag_us} + CascadeResult{entity_id,confidence,hop,lag_us}。cascade: hop0 处理初始信号，每跳 spmv_csr 传播 → apply_hop 计算置信度（confidence_for：脆性 coordinates>0.5 时 raw>=brittle_threshold→1.0 透传，否则 raw·0.5^hop 快衰减；非脆性 raw·decay_coefficient），conf<theta 剪枝置0，记录首次命中跳数+累积 time_lag。双缓冲(cur/next)+raw_buf 避免逐跳分配。
+- [x] **测试验证**: `cargo test cascade` → 6 passed；`cargo test --release cascade_100` perf 通过(<100μs)；全套 45 passed；clippy 无告警；fmt 通过。
+- [x] **影响范围**: 新增级联模块，复用 matrix::spmv_csr(SIMD)；不改既有 API。网络层(后续)可暴露 CascadeRun。
 
 ### 测试步骤
-1. 
-2. 
-3. 
+1. `cargo test cascade` → 6/6 ok
+2. `cargo test --release cascade_100_entities_5_hops_under_100us` → ok（release <100μs）
+3. `cargo clippy --all-targets` → 无告警；`cargo fmt --check` → exit 0
 
 ### 验证结果
-<!-- 粘贴验证截图、命令输出或测试结果 -->
+- 星型拓扑：中心 conf=1.0@hop0；叶子 conf=0.5·decay=0.5@hop1（w=0.5,decay=1.0）
+- 脆性突破(raw=0.5>=thr=0.3)→confidence=1.0
+- 脆性未突破(thr=0.8)：0.5·0.5^1=0.25 < 非脆性 0.5·0.9=0.45（快衰减）
+- 2-环 lag 累积：e0 命中 hop0+hop2→20，e1 命中 hop1+hop3→40
+- conf<theta(0.05<0.1)剪枝，叶不出现在结果
+- 100实体5跳 release <100μs（实测远低）

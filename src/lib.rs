@@ -12,6 +12,7 @@
 //! - `constants`：编译期常量（内存预算与拓扑边界）
 //! - `entity`：Entity / DeltaEvent / SteadyState / Relation 内存布局
 
+pub mod cascade;
 pub mod constants;
 pub mod constraint;
 pub mod entity;

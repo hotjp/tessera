@@ -209,13 +209,13 @@
       "description": "[T7] SIMD SpMV + 运行时硬件检测 fallback (SPEC §6.2 SIMD)",
       "template": "task",
       "priority": "P1",
-      "status": "in_progress",
+      "status": "completed",
       "parent_id": null,
       "output_req": "8k",
       "context_hint": "8k",
       "task_file": "tasks/task_008.md",
       "created_at": "2026-07-10T16:59:36.258046",
-      "updated_at": "2026-07-12T23:43:53.245667",
+      "updated_at": "2026-07-12T23:45:48.886630",
       "dependencies": [
         "task_007"
       ],
@@ -238,13 +238,13 @@
       "description": "[T8] 级联推理(含脆性阈值) (SPEC §6.3 §2.5)",
       "template": "task",
       "priority": "P0",
-      "status": "blocked",
+      "status": "in_progress",
       "parent_id": null,
       "output_req": "8k",
       "context_hint": "8k",
       "task_file": "tasks/task_009.md",
       "created_at": "2026-07-10T16:59:36.356843",
-      "updated_at": "2026-07-10T16:59:36.356854",
+      "updated_at": "2026-07-12T23:55:09.078835",
       "dependencies": [
         "task_007",
         "task_008"
@@ -329,13 +329,13 @@
       "description": "[T11] 跨平台 CI 矩阵 + 架构决策记录(DECISIONS.md)",
       "template": "task",
       "priority": "P1",
-      "status": "blocked",
+      "status": "pending",
       "parent_id": null,
       "output_req": "8k",
       "context_hint": "8k",
       "task_file": "tasks/task_012.md",
       "created_at": "2026-07-12T22:13:21.316221",
-      "updated_at": "2026-07-12T22:13:21.316225",
+      "updated_at": "2026-07-12T23:45:48.610868",
       "dependencies": [
         "task_001",
         "task_008"

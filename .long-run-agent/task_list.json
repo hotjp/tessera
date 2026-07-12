@@ -92,13 +92,13 @@
       "description": "[T3] SimplexCodec 无损编解码 (SPEC §7.1)",
       "template": "task",
       "priority": "P1",
-      "status": "pending",
+      "status": "in_progress",
       "parent_id": null,
       "output_req": "8k",
       "context_hint": "8k",
       "task_file": "tasks/task_004.md",
       "created_at": "2026-07-10T16:59:35.884024",
-      "updated_at": "2026-07-12T22:54:13.672157",
+      "updated_at": "2026-07-12T23:13:34.034181",
       "dependencies": [
         "task_003"
       ],
@@ -150,13 +150,13 @@
       "description": "[T5] 增量环写入 + query_state (SPEC §3.2 §6.1)",
       "template": "task",
       "priority": "P0",
-      "status": "in_progress",
+      "status": "completed",
       "parent_id": null,
       "output_req": "8k",
       "context_hint": "8k",
       "task_file": "tasks/task_006.md",
       "created_at": "2026-07-10T16:59:36.076122",
-      "updated_at": "2026-07-12T23:06:35.818937",
+      "updated_at": "2026-07-12T23:09:45.379571",
       "dependencies": [
         "task_002",
         "task_003"

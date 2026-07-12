@@ -52,14 +52,18 @@ src/simplex.rs(追加 impl)。f32 to_le_bytes/from_le_bytes。decode 末尾 for 
 
 <!-- 标记完成前，请提供以下证据： -->
 
-- [ ] **实现证明**: 简要说明如何实现
-- [ ] **测试验证**: 如何验证功能正常（测试步骤/截图/命令输出）
-- [ ] **影响范围**: 是否影响其他功能
+- [x] **实现证明**: simplex.rs 追加 SimplexCodec{encode,decode}。encode 每行存前 k-1 个 f32(to_le_bytes)，仅活跃切面(k>=1)断言 Σ前k=1(容差1e-5)否则 panic（k=0 空行无约束）。decode 前 k-1 列从字节读回、第 k 列=1-Σ前k-1、padding 列(i>=k)显式置0。f32 to_le_bytes/from_le_bytes 保证前 k-1 列比特精确。
+- [x] **测试验证**: `cargo test codec` → 5 passed；全套 27 passed；clippy 无告警；fmt 通过。
+- [x] **影响范围**: 纯追加编解码工具（无损压缩 Σ(k-1)·4 字节/行），不改既有 API；网络层/快照层(后续)可复用做线协议压缩。
 
 ### 测试步骤
-1. 
-2. 
-3. 
+1. `cargo test codec` → 5/5 ok
+2. `cargo clippy --all-targets` → 无告警
+3. `cargo fmt --check` → exit 0
 
 ### 验证结果
-<!-- 粘贴验证截图、命令输出或测试结果 -->
+- 往返逐元素误差<1e-6（前 k-1 列比特精确，第 k 列由 1-Σ 还原，构造时末列=1-Σ故精确）
+- 解码后 padding 列(3..K_MAX)全 0
+- 退化维度 [0.5,0.0,0.5] 的 0 权重保留不移除
+- 行和≠1（[0.5,0.5,0.5]=1.5）→ encode panic（catch_unwind 捕获）
+- 编码大小最小：(k-1)·4 字节/行

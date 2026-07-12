@@ -92,6 +92,69 @@ pub fn frobenius_distance(
     sum_sq.sqrt()
 }
 
+/// 单纯形约束无损编解码器（SPEC §7.1）。
+///
+/// 利用「Σ前 k 项 = 1」约束，每行只存前 `k-1` 个 f32（`to_le_bytes`），
+/// 第 `k` 列在解码时由 `1 - Σ前 k-1` 还原 → 对满足约束的输入 100% 可逆。
+pub struct SimplexCodec;
+
+impl SimplexCodec {
+    /// 编码坐标矩阵为字节流。每行存前 `k-1` 个 f32（小端）。
+    ///
+    /// **前置条件**：每行前 `k` 项之和 = 1（容差 1e-5），否则 panic。
+    pub fn encode(m: &[[f32; K_MAX]; MAX_SLICES], slice_dims: &[u8]) -> Vec<u8> {
+        let mut out = Vec::new();
+        for (s, row) in m.iter().enumerate() {
+            let k = (slice_dims.get(s).copied().unwrap_or(0) as usize).min(K_MAX);
+            if k >= 1 {
+                // 仅活跃切面要求 Σ前 k 项 = 1（k=0 空行无约束）
+                let sum: f32 = row[..k].iter().sum();
+                assert!(
+                    (sum - 1.0).abs() < 1e-5,
+                    "SimplexCodec::encode: row {s} sum {sum} != 1 (容差 1e-5)"
+                );
+            }
+            // 存前 k-1 个 f32（第 k 列由约束还原）
+            for v in row[..k.saturating_sub(1)].iter() {
+                out.extend_from_slice(&v.to_le_bytes());
+            }
+        }
+        out
+    }
+
+    /// 解码字节流为坐标矩阵。
+    ///
+    /// 前 `k-1` 列从字节读回；第 `k` 列 = `1 - Σ前 k-1`；padding 列（`i >= k`）显式置 0。
+    pub fn decode(data: &[u8], slice_dims: &[u8], k_max: usize) -> [[f32; K_MAX]; MAX_SLICES] {
+        let mut out = [[0.0f32; K_MAX]; MAX_SLICES];
+        let mut pos = 0usize;
+        for (s, row) in out.iter_mut().enumerate() {
+            let k = (slice_dims.get(s).copied().unwrap_or(0) as usize)
+                .min(k_max)
+                .min(K_MAX);
+            let n_stored = k.saturating_sub(1);
+            let mut sum_prev = 0.0f32;
+            for slot in row[..n_stored].iter_mut() {
+                let mut b = [0u8; 4];
+                b.copy_from_slice(&data[pos..pos + 4]);
+                let v = f32::from_le_bytes(b);
+                *slot = v;
+                sum_prev += v;
+                pos += 4;
+            }
+            // 第 k 列 = 1 - Σ前 k-1
+            if k >= 1 {
+                row[k - 1] = 1.0 - sum_prev;
+            }
+            // padding 列（i >= k）显式置 0
+            for slot in row[k..K_MAX].iter_mut() {
+                *slot = 0.0;
+            }
+        }
+        out
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -213,5 +276,97 @@ mod tests {
         let dims = [K_MAX as u8; MAX_SLICES];
         let d = frobenius_distance(&a, &b, &dims);
         assert!(approx_eq(d, 1.0, 1e-5), "d={d}");
+    }
+}
+
+#[cfg(test)]
+mod codec {
+    use super::*;
+
+    /// 构造一行：`first` 为前 k-1 个权重，第 k 列 = 1 - Σ，其余 0。
+    fn row(first: &[f32]) -> [f32; K_MAX] {
+        let mut r = [0.0f32; K_MAX];
+        let mut s = 0.0f32;
+        for (i, &v) in first.iter().enumerate() {
+            r[i] = v;
+            s += v;
+        }
+        r[first.len()] = 1.0 - s; // 第 k 列
+        r
+    }
+
+    /// 前 N 项为 `ks`，其余 0。
+    fn dims(ks: &[u8]) -> [u8; MAX_SLICES] {
+        let mut d = [0u8; MAX_SLICES];
+        for (i, &k) in ks.iter().enumerate() {
+            d[i] = k;
+        }
+        d
+    }
+
+    #[test]
+    fn round_trip_elementwise_within_1e6() {
+        let mut m = [[0.0f32; K_MAX]; MAX_SLICES];
+        m[0] = row(&[0.2, 0.3]); // k=3: [0.2,0.3,0.5]
+        m[1] = row(&[0.1, 0.1, 0.1]); // k=4
+        m[2] = row(&[0.5]); // k=2: [0.5,0.5]
+        let dims = dims(&[3, 4, 2]);
+        let enc = SimplexCodec::encode(&m, &dims);
+        let dec = SimplexCodec::decode(&enc, &dims, K_MAX);
+        for (s, ((d_row, m_row), &k)) in dec.iter().zip(m.iter()).zip(dims.iter()).enumerate() {
+            for (i, (&d, &e)) in d_row[..k as usize]
+                .iter()
+                .zip(m_row[..k as usize].iter())
+                .enumerate()
+            {
+                assert!((d - e).abs() < 1e-6, "[{s}][{i}] {d} vs {e}");
+            }
+        }
+    }
+
+    #[test]
+    fn decode_padding_columns_are_zero() {
+        let mut m = [[0.0f32; K_MAX]; MAX_SLICES];
+        m[0] = row(&[0.25, 0.25]); // k=3
+        let dims = dims(&[3]);
+        let enc = SimplexCodec::encode(&m, &dims);
+        let dec = SimplexCodec::decode(&enc, &dims, K_MAX);
+        for &v in dec[0][3..K_MAX].iter() {
+            assert_eq!(v, 0.0, "padding column != 0");
+        }
+    }
+
+    #[test]
+    fn degenerate_zero_weight_preserved() {
+        // 含 0 权重的退化维度：[0.5, 0.0, 0.5]，k=3，中间 0 不移除
+        let mut m = [[0.0f32; K_MAX]; MAX_SLICES];
+        m[0] = row(&[0.5, 0.0]); // [0.5, 0.0, 0.5]
+        let dims = dims(&[3]);
+        let enc = SimplexCodec::encode(&m, &dims);
+        let dec = SimplexCodec::decode(&enc, &dims, K_MAX);
+        assert!((dec[0][0] - 0.5).abs() < 1e-6);
+        assert!(dec[0][1].abs() < 1e-6, "0 权重未保留: {}", dec[0][1]);
+        assert!((dec[0][2] - 0.5).abs() < 1e-6);
+    }
+
+    #[test]
+    fn row_sum_not_one_panics() {
+        let mut m = [[0.0f32; K_MAX]; MAX_SLICES];
+        m[0] = [0.5, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0]; // sum=1.5
+        let dims = dims(&[3]);
+        let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            SimplexCodec::encode(&m, &dims);
+        }));
+        assert!(res.is_err(), "expected panic on row sum != 1");
+    }
+
+    #[test]
+    fn encode_size_is_minimal() {
+        // 每行仅存 (k-1)*4 字节
+        let mut m = [[0.0f32; K_MAX]; MAX_SLICES];
+        m[0] = row(&[0.2, 0.3]); // k=3 → 2 f32 = 8 字节
+        let dims = dims(&[3]);
+        let enc = SimplexCodec::encode(&m, &dims);
+        assert_eq!(enc.len(), 2 * 4);
     }
 }

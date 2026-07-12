@@ -51,14 +51,20 @@
 
 <!-- 标记完成前，请提供以下证据： -->
 
-- [ ] **实现证明**: 简要说明如何实现
-- [ ] **测试验证**: 如何验证功能正常（测试步骤/截图/命令输出）
-- [ ] **影响范围**: 是否影响其他功能
+- [x] **实现证明**: (1) docs/DECISIONS.md 已存在(baseline commit 64d20ee，3397B)，含 ADR-001(SIMD=nightly std::simd，明确偏离 SPEC §6.2/附录B) + ADR-002(4 平台矩阵)，本任务验证齐全。(2) 新增 .github/workflows/ci.yml：test-matrix 覆盖 ubuntu-latest(x86_64)/ubuntu-24.04-arm(aarch64 Graviton)/macos-latest(Apple Silicon)/windows-latest，rust-toolchain.toml 自动安装固定 nightly，每平台 cargo build+cargo test；lint job 跑 fmt+clippy(-D warnings)+ x86 intrinsic 守卫(grep 真实用法)。(3) 新增 Windows 路径可移植性回归测试(snapshot_path_portable_across_platforms)，test_engine 路径改相对 "snapshots"。
+- [x] **测试验证**: ci.yml 经 python yaml 校验合法；本地 `cargo test` 59 passed、`cargo clippy --all-targets -- -D warnings` 无告警、`cargo fmt --check` 通过；`grep -rnE "use std::arch::x86_64|is_x86_feature_detected!\(|_mm[0-9]*_" src/` 无匹配（无 x86 intrinsic）。
+- [x] **影响范围**: 新增 CI 配置与一个回归测试，不改业务代码（仅 test_engine 路径字符串调整）。实际 4 平台 CI 执行在 push 到 GitHub 后由 Actions 触发。
 
 ### 测试步骤
-1. 
-2. 
-3. 
+1. `python3 -c "import yaml; yaml.safe_load(open('.github/workflows/ci.yml'))"` → 合法
+2. `cargo test` → 59 passed（含 snapshot_path_portable_across_platforms）
+3. `cargo clippy --all-targets -- -D warnings` → 无告警（与 CI lint job 一致）
+4. `grep -rnE "use std::arch::x86_64|is_x86_feature_detected!\(|_mm[0-9]*_" src/` → 无匹配
 
 ### 验证结果
-<!-- 粘贴验证截图、命令输出或测试结果 -->
+- DECISIONS.md: ADR-001 + ADR-002 齐全（docs/ 下，3397B）
+- CI 矩阵: 4 平台（x86_64 Linux / aarch64 Linux Graviton / aarch64 macOS / Windows）
+- portable_simd: 本地 aarch64 编译通过（matrix "编译" step 验证各平台）
+- 无 x86 intrinsic: refined grep 仅匹配真实用法，src/ 无残留
+- Windows 路径回归: PathBuf::join 的 file_name 在各平台均为 "snapshot.bin"
+- ⚠️ 注：GitHub Actions 实际 4 平台执行需 push 到仓库触发；本地已验证 workflow 语法、测试、lint、守卫全绿

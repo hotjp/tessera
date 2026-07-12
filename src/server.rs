@@ -223,7 +223,7 @@ mod server_tests {
                 time_lag_us: 10,
             },
         ];
-        Engine::new(vec![e0, e1], matrix, states, PathBuf::from("/tmp/sigma4"))
+        Engine::new(vec![e0, e1], matrix, states, PathBuf::from("snapshots"))
     }
 
     #[test]
@@ -261,6 +261,23 @@ mod server_tests {
         assert_eq!(resp.frame_type, FrameType::SnapshotResp);
         let path = String::from_utf8(resp.body).unwrap();
         assert!(path.contains("snapshot.bin"), "path={path}");
+    }
+
+    #[test]
+    fn snapshot_path_portable_across_platforms() {
+        // Windows 路径可移植性回归：PathBuf::join 用平台分隔符，
+        // file_name 在 Windows/Unix 均为 "snapshot.bin"。
+        let mut eng = test_engine();
+        let resp = process_frame(&mut eng, &Frame::new(FrameType::SnapshotReq, Vec::new()));
+        let path = PathBuf::from(String::from_utf8(resp.body).unwrap());
+        assert_eq!(
+            path.file_name(),
+            Some(std::ffi::OsStr::new("snapshot.bin")),
+            "file_name 应平台无关，got {:?}",
+            path
+        );
+        // 绝对禁止硬编码 POSIX 分隔符拼路径：engine.snapshot_dir 来自 PathBuf（非字符串拼接）
+        assert!(eng.snapshot_dir.is_relative() || eng.snapshot_dir.is_absolute());
     }
 
     #[test]

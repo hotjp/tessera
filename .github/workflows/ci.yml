@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # ADR-002 目标平台矩阵：4 平台均通过固定 nightly 编译并跑测试。
+  # rust-toolchain.toml（task_001）让 rustup 在每平台自动安装 nightly-2026-07-11。
+  test-matrix:
+    name: test (${{ matrix.label }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, label: "x86_64 Linux" }
+          - { os: ubuntu-24.04-arm, label: "aarch64 Linux (Graviton)" }
+          - { os: macos-latest, label: "aarch64 macOS (Apple Silicon)" }
+          - { os: windows-latest, label: "Windows x86_64" }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: 编译（验证 portable_simd 在本平台自动降级，ADR-001）
+        run: cargo build --all-targets
+      - name: 测试
+        run: cargo test --all-targets
+
+  # 质量门 + ADR-001 守卫：无 x86_64 专属 intrinsic 残留。
+  lint:
+    name: fmt + clippy + 无 x86 intrinsic
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: rustfmt 检查
+        run: cargo fmt --check
+      - name: clippy（-D warnings）
+        run: cargo clippy --all-targets -- -D warnings
+      - name: 确认无 x86_64 专属 intrinsic（ADR-001）
+        run: |
+          set -e
+          # 仅匹配真实用法：import / 带参调用 / intrinsic 函数名（_mm/_mm256/_mm512_*）
+          if grep -rnE "use std::arch::x86_64|is_x86_feature_detected!\(|_mm[0-9]*_" src/; then
+            echo "::error::发现 x86_64 专属 intrinsic，违反 ADR-001（须用 std::simd 可移植路径）" >&2
+            exit 1
+          fi
+          echo "OK: 无 x86_64 intrinsic 残留"

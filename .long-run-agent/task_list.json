@@ -92,13 +92,13 @@
       "description": "[T3] SimplexCodec 无损编解码 (SPEC §7.1)",
       "template": "task",
       "priority": "P1",
-      "status": "in_progress",
+      "status": "completed",
       "parent_id": null,
       "output_req": "8k",
       "context_hint": "8k",
       "task_file": "tasks/task_004.md",
       "created_at": "2026-07-10T16:59:35.884024",
-      "updated_at": "2026-07-12T23:13:34.034181",
+      "updated_at": "2026-07-12T23:16:52.269642",
       "dependencies": [
         "task_003"
       ],
@@ -121,13 +121,13 @@
       "description": "[T4] 帕累托约束投影 (SPEC §2.5)",
       "template": "task",
       "priority": "P1",
-      "status": "pending",
+      "status": "in_progress",
       "parent_id": null,
       "output_req": "8k",
       "context_hint": "8k",
       "task_file": "tasks/task_005.md",
       "created_at": "2026-07-10T16:59:35.977657",
-      "updated_at": "2026-07-12T22:54:13.672723",
+      "updated_at": "2026-07-12T23:23:39.195100",
       "dependencies": [
         "task_003"
       ],

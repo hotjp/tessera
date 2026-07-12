@@ -52,14 +52,18 @@ src/constraint.rs。复用 simplex::project_onto_simplex。约束顺序用三次
 
 <!-- 标记完成前，请提供以下证据： -->
 
-- [ ] **实现证明**: 简要说明如何实现
-- [ ] **测试验证**: 如何验证功能正常（测试步骤/截图/命令输出）
-- [ ] **影响范围**: 是否影响其他功能
+- [x] **实现证明**: 新建 src/constraint.rs。Constraint{slice,endpoint,value,kind} + ConstraintKind{LowerBound,UpperBound,Linear{coefficients,target}}。拆 apply_constraints（私有不重投影，便于测顺序/clamp）+ pareto_project（调用前者后对每行 Duchi 重投影）。固定顺序用三次 filter 迭代保证（lower→upper→linear）。Linear 用正交投影到超平面 Σ coeff·coord=target（step=(target-dot)/||coeff||²）。
+- [x] **测试验证**: `cargo test pareto` → 6 passed；全套 33 passed；clippy 无告警；fmt 通过。
+- [x] **影响范围**: 纯新增约束投影模块，复用 simplex::project_onto_simplex_inplace；不改既有 API。级联推理(后续)可在投影后施加业务约束。
 
 ### 测试步骤
-1. 
-2. 
-3. 
+1. `cargo test pareto` → 6/6 ok
+2. `cargo clippy --all-targets` → 无告警
+3. `cargo fmt --check` → exit 0
 
 ### 验证结果
-<!-- 粘贴验证截图、命令输出或测试结果 -->
+- lower/upper clamp 正确（0.2→0.5 / 0.9→0.3）
+- 固定顺序：同一端点 lower=0.5 后 upper=0.3 → 0.3（upper 后应用胜出）
+- Linear：[0.5,0.5]·[1,1]=1.0 → 投影到 0.8，误差<1e-6
+- 重投影：upper 破坏行和后 pareto_project 恢复 Σ=1（row0/row1 均为 1）
+- 相容界（lower=0/upper=1，单纯形天然范围）violation=0 + Σ=1

@@ -11,5 +11,6 @@
 //! - `entity`：Entity / DeltaEvent / SteadyState / Relation 内存布局
 
 pub mod constants;
+pub mod constraint;
 pub mod entity;
 pub mod simplex;

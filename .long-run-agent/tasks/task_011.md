@@ -53,14 +53,19 @@ src/loader.rs。倾向零外部依赖手写 CSV 解析(字段含中文逗号,需
 
 <!-- 标记完成前，请提供以下证据： -->
 
-- [ ] **实现证明**: 简要说明如何实现
-- [ ] **测试验证**: 如何验证功能正常（测试步骤/截图/命令输出）
-- [ ] **影响范围**: 是否影响其他功能
+- [x] **实现证明**: 新建 src/loader.rs。手写 CSV 解析(splitn(7,',')，零外部依赖；数据集 183 行 × 7 字段、无引号/内嵌逗号，已验证)。分类 A-E→码 0-4；确定性先验 facet_prior(cat,facet) 用 (cat,facet,endpoint) 可审计公式生成正权重归一化到 4 端点单纯形(非 LLM)，4 切面(权力/动态/认知/级联)，padding 列 fill(0)。中国主体按组织名关键词(中国/央企/中投/兵器/航天...)检测→ownership_type=1。EntityPool 持有 names+entities，name_ptr 指向池内名字字节。load_from_file 用 Path(跨平台)。
+- [x] **测试验证**: `cargo test loader` → 8 passed（count==183/每切面和=1/padding=0/非负/A-E全覆盖/中国主体标记/分类先验互异/name_ptr有效）；全套 67 passed；clippy -D warnings 无告警；fmt 通过。
+- [x] **影响范围**: 新增数据加载器（管理面，非热路径）；entity.rs 加 SteadyState::new 构造器（避免 _pad 私有字段跨模块构造）。加载的 EntityPool 可喂入 server.Engine。
 
 ### 测试步骤
-1. 
-2. 
-3. 
+1. `cargo test loader` → 8/8 ok
+2. `cargo clippy --all-targets -- -D warnings` → 无告警
+3. `cargo fmt --check` → exit 0
 
 ### 验证结果
-<!-- 粘贴验证截图、命令输出或测试结果 -->
+- entity_count == 183 ✅
+- 每实体每切面(num_slices=4)前 k=4 项和 = 1（容差 1e-5）✅
+- padding 列(4..8)= 0 ✅；全权重 ≥ 0 ✅
+- 分类 A/B/C/D/E 全覆盖（62/12/22/84/3）✅
+- 中国主体(中金/中投/兵器/航天/航空/五矿等) ownership_type=1 ✅
+- 不同分类先验互异 ✅；name_ptr 指向池内名字字节(unsafe 读取一致) ✅

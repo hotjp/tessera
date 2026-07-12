@@ -16,6 +16,7 @@ pub mod cascade;
 pub mod constants;
 pub mod constraint;
 pub mod entity;
+pub mod loader;
 pub mod matrix;
 pub mod protocol;
 pub mod server;

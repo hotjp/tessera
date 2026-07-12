@@ -91,6 +91,18 @@ pub struct SteadyState {
     _pad: [u8; 5],
 }
 
+impl SteadyState {
+    /// 构造稳态属性（`_pad` 置 0）。
+    pub fn new(geography: u16, industry: u16, ownership_type: u8) -> Self {
+        Self {
+            geography,
+            industry,
+            ownership_type,
+            _pad: [0; 5],
+        }
+    }
+}
+
 /// 实体间关系边（CSR 级联矩阵的语义来源，SPEC §3.4）。
 #[repr(C)]
 pub struct Relation {

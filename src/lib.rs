@@ -13,4 +13,5 @@
 pub mod constants;
 pub mod constraint;
 pub mod entity;
+pub mod matrix;
 pub mod simplex;

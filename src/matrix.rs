@@ -1,0 +1,170 @@
+//! CSR 稀疏级联矩阵与标量 SpMV（SPEC §6.2 scalar）。
+//!
+//! 本标量实现是 SIMD 路径（task_008，nightly `std::simd`，ADR-001）的
+//! **真值参照**与最终 fallback。
+
+/// CSR 格式的稀疏级联矩阵（n×n）。
+#[repr(C)]
+pub struct CascadeMatrix {
+    /// 方阵维度 n。
+    pub n: u32,
+    /// 行指针（长度 n+1）：`row_ptr[i]..row_ptr[i+1]` 为第 i 行非零元在
+    /// `col_idx` / `values` / `time_lag_us` 中的下标区间。
+    pub row_ptr: Vec<u32>,
+    /// 列索引（与 values 一一对应）。
+    pub col_idx: Vec<u32>,
+    /// 非零权重值。
+    pub values: Vec<f32>,
+    /// 每条边的传播时滞（微秒），与 values 一一对应。
+    pub time_lag_us: Vec<u32>,
+}
+
+impl CascadeMatrix {
+    /// 从边列表 `(from, to, weight, time_lag_us)` 构建 CSR（行 = from）。
+    ///
+    /// `from >= n` 的非法边被丢弃；同行的边按输入顺序排列。
+    pub fn from_edges(n: u32, edges: &[(u32, u32, f32, u32)]) -> Self {
+        let n_us = n as usize;
+        // 1. 计数每行非零元
+        let mut row_ptr = vec![0u32; n_us + 1];
+        for &(from, _, _, _) in edges {
+            if (from as usize) < n_us {
+                row_ptr[from as usize + 1] += 1;
+            }
+        }
+        // 2. 前缀和 → row_ptr
+        for i in 0..n_us {
+            row_ptr[i + 1] += row_ptr[i];
+        }
+        // 3. 填充 col_idx / values / time_lag_us
+        let nnz = row_ptr[n_us] as usize;
+        let mut col_idx = vec![0u32; nnz];
+        let mut values = vec![0.0f32; nnz];
+        let mut time_lag_us = vec![0u32; nnz];
+        let mut cursor = row_ptr.clone();
+        for &(from, to, w, lag) in edges {
+            let f = from as usize;
+            if f < n_us {
+                let pos = cursor[f] as usize;
+                col_idx[pos] = to;
+                values[pos] = w;
+                time_lag_us[pos] = lag;
+                cursor[f] += 1;
+            }
+        }
+        CascadeMatrix {
+            n,
+            row_ptr,
+            col_idx,
+            values,
+            time_lag_us,
+        }
+    }
+}
+
+/// 标量 CSR SpMV：`y[i] = Σ_k values[k] * x[col_idx[k]]`，
+/// `k ∈ row_ptr[i]..row_ptr[i+1]`。
+///
+/// SIMD 路径（task_008）的真值参照与 fallback（ADR-001）。
+pub fn spmv_csr_scalar(x: &[f32], matrix: &CascadeMatrix, y: &mut [f32]) {
+    // 逐行点积：y[i] = Σ values[k]·x[col_idx[k]], k ∈ row_ptr[i]..row_ptr[i+1]
+    for (y_i, window) in y.iter_mut().zip(matrix.row_ptr.windows(2)) {
+        let start = window[0] as usize;
+        let end = window[1] as usize;
+        let mut acc = 0.0f32;
+        for (&col, &v) in matrix.col_idx[start..end]
+            .iter()
+            .zip(matrix.values[start..end].iter())
+        {
+            acc += v * x[col as usize];
+        }
+        *y_i = acc;
+    }
+}
+
+#[cfg(test)]
+mod spmv {
+    use super::*;
+
+    /// 稠密参考实现（逐元素对比用）。
+    fn dense_spmv(n: usize, edges: &[(u32, u32, f32, u32)], x: &[f32]) -> Vec<f32> {
+        let mut d = vec![vec![0.0f32; n]; n];
+        for &(f, t, w, _) in edges {
+            d[f as usize][t as usize] = w;
+        }
+        (0..n)
+            .map(|i| (0..n).map(|j| d[i][j] * x[j]).sum())
+            .collect()
+    }
+
+    #[test]
+    fn scalar_matches_dense_elementwise() {
+        let edges = vec![
+            (0, 1, 0.5, 10),
+            (0, 2, 0.3, 20),
+            (1, 2, 0.8, 5),
+            (2, 0, 0.1, 0),
+        ];
+        let m = CascadeMatrix::from_edges(3, &edges);
+        let x = vec![1.0f32, 2.0, 3.0];
+        let mut y = vec![0.0f32; 3];
+        spmv_csr_scalar(&x, &m, &mut y);
+        let expected = dense_spmv(3, &edges, &x);
+        // 预期 [1.9, 2.4, 0.1]
+        for i in 0..3 {
+            assert!(
+                (y[i] - expected[i]).abs() < 1e-5,
+                "[{i}] {} vs {}",
+                y[i],
+                expected[i]
+            );
+        }
+    }
+
+    #[test]
+    fn empty_row_yields_zero() {
+        // 行 0 无非零元 → y[0]=0
+        let edges = vec![(1, 2, 0.5, 0)];
+        let m = CascadeMatrix::from_edges(3, &edges);
+        let x = vec![1.0f32, 1.0, 1.0];
+        let mut y = vec![0.0f32; 3];
+        spmv_csr_scalar(&x, &m, &mut y);
+        assert_eq!(y[0], 0.0, "空行应为 0");
+        assert!((y[1] - 0.5).abs() < 1e-6);
+        assert_eq!(y[2], 0.0);
+    }
+
+    #[test]
+    fn single_element_row_correct() {
+        let edges = vec![(0, 1, 0.7, 0)];
+        let m = CascadeMatrix::from_edges(2, &edges);
+        let x = vec![0.0f32, 4.0];
+        let mut y = vec![0.0f32; 2];
+        spmv_csr_scalar(&x, &m, &mut y);
+        assert!((y[0] - 2.8).abs() < 1e-6, "0.7*4.0 = 2.8, got {}", y[0]); // 0.7 * 4.0
+        assert_eq!(y[1], 0.0);
+    }
+
+    #[test]
+    fn invalid_from_edge_dropped() {
+        // from >= n 的边被丢弃
+        let edges = vec![(0, 1, 0.5, 0), (5, 1, 9.0, 0)]; // 5 >= 2
+        let m = CascadeMatrix::from_edges(2, &edges);
+        assert_eq!(m.col_idx.len(), 1); // 仅 1 条合法边
+        let x = vec![1.0f32, 2.0];
+        let mut y = vec![0.0f32; 2];
+        spmv_csr_scalar(&x, &m, &mut y);
+        assert!((y[0] - 1.0).abs() < 1e-6); // 0.5*2.0
+    }
+
+    #[test]
+    fn matrix_fields_consistent() {
+        let edges = vec![(0, 1, 0.5, 10), (1, 0, 0.25, 20)];
+        let m = CascadeMatrix::from_edges(2, &edges);
+        assert_eq!(m.n, 2);
+        assert_eq!(m.row_ptr, vec![0, 1, 2]);
+        assert_eq!(m.col_idx, vec![1, 0]);
+        assert_eq!(m.values, vec![0.5, 0.25]);
+        assert_eq!(m.time_lag_us, vec![10, 20]);
+    }
+}

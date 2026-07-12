@@ -44,6 +44,11 @@ pub struct Entity {
     _pad1: [u8; 6],
 }
 
+// SAFETY: `name_ptr` 指向外部（非拥有）字节串，跨线程移动 Entity 不产生数据竞争——
+// 指针仅作数据值，所指数据的生命周期与线程可见性由外部（持有名字的所有者）保证。
+// 故 Entity 可跨线程传递（服务端 Arc<Mutex<Engine>> 共享所需）。
+unsafe impl Send for Entity {}
+
 /// 增量事件：单点坐标更新（SPEC §3.4）。`repr(packed)` 紧凑打包到 16 字节。
 ///
 /// 注意：packed 结构的字段访问可能非对齐；读取应按值拷贝（query_state 已如此）。
@@ -59,6 +64,19 @@ pub struct DeltaEvent {
     /// 该端点坐标的增量值。
     pub delta_value: f32,
     _pad: u8,
+}
+
+impl DeltaEvent {
+    /// 构造增量事件（`_pad` 置 0）。
+    pub fn new(timestamp_us: u64, slice_mask: u16, endpoint_idx: u8, delta_value: f32) -> Self {
+        Self {
+            timestamp_us,
+            slice_mask,
+            endpoint_idx,
+            delta_value,
+            _pad: 0,
+        }
+    }
 }
 
 /// 稳态属性（地理 / 行业 / 所有权类型）。
@@ -105,6 +123,33 @@ pub struct EntitySnapshot {
 }
 
 impl Entity {
+    /// 构造零初始化实体（坐标与增量环清零；仅设 id / entity_type / num_slices；valid_until=MAX）。
+    pub fn new(id: u32, entity_type: u8, num_slices: u8) -> Self {
+        Self {
+            id,
+            entity_type,
+            flags: 0,
+            num_slices,
+            _pad0: 0,
+            valid_from: 0,
+            valid_until: i64::MAX,
+            coordinates: [[0.0; K_MAX]; MAX_SLICES],
+            slice_dims: [0; MAX_SLICES],
+            delta_ring: [DeltaEvent::new(0, 0, 0, 0.0); DELTA_RING_CAPACITY],
+            ring_head: 0,
+            ring_tail: 0,
+            steady_state: SteadyState {
+                geography: 0,
+                industry: 0,
+                ownership_type: 0,
+                _pad: [0; 5],
+            },
+            name_ptr: core::ptr::null(),
+            name_len: 0,
+            _pad1: [0; 6],
+        }
+    }
+
     /// 单线程（SPSC）写入一个增量事件到环尾。
     ///
     /// 写 `delta_ring[ring_head % CAP]`，`ring_head += 1`；若

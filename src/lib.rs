@@ -17,4 +17,6 @@ pub mod constants;
 pub mod constraint;
 pub mod entity;
 pub mod matrix;
+pub mod protocol;
+pub mod server;
 pub mod simplex;

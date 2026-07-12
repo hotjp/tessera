@@ -15,6 +15,11 @@ path = "src/lib.rs"
 # name = "..."
 # harness = false
 
+[dependencies]
+tokio = { version = "1", features = ["rt", "net", "io-util", "macros"] }
+tokio-rustls = "0.26"
+rustls = "0.23"
+
 [dev-dependencies]
 criterion = "0.5"
 

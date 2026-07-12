@@ -63,13 +63,13 @@
       "description": "[T2] Duchi 单纯形投影 + Frobenius 距离 (SPEC §2.1 §2.4)",
       "template": "task",
       "priority": "P1",
-      "status": "in_progress",
+      "status": "completed",
       "parent_id": null,
       "output_req": "8k",
       "context_hint": "8k",
       "task_file": "tasks/task_003.md",
       "created_at": "2026-07-10T16:59:35.761938",
-      "updated_at": "2026-07-12T22:53:14.450835",
+      "updated_at": "2026-07-12T22:54:13.882040",
       "dependencies": [
         "task_002"
       ],
@@ -92,13 +92,13 @@
       "description": "[T3] SimplexCodec 无损编解码 (SPEC §7.1)",
       "template": "task",
       "priority": "P1",
-      "status": "blocked",
+      "status": "pending",
       "parent_id": null,
       "output_req": "8k",
       "context_hint": "8k",
       "task_file": "tasks/task_004.md",
       "created_at": "2026-07-10T16:59:35.884024",
-      "updated_at": "2026-07-10T16:59:35.884032",
+      "updated_at": "2026-07-12T22:54:13.672157",
       "dependencies": [
         "task_003"
       ],
@@ -121,13 +121,13 @@
       "description": "[T4] 帕累托约束投影 (SPEC §2.5)",
       "template": "task",
       "priority": "P1",
-      "status": "blocked",
+      "status": "pending",
       "parent_id": null,
       "output_req": "8k",
       "context_hint": "8k",
       "task_file": "tasks/task_005.md",
       "created_at": "2026-07-10T16:59:35.977657",
-      "updated_at": "2026-07-10T16:59:35.977664",
+      "updated_at": "2026-07-12T22:54:13.672723",
       "dependencies": [
         "task_003"
       ],
@@ -150,13 +150,13 @@
       "description": "[T5] 增量环写入 + query_state (SPEC §3.2 §6.1)",
       "template": "task",
       "priority": "P0",
-      "status": "blocked",
+      "status": "in_progress",
       "parent_id": null,
       "output_req": "8k",
       "context_hint": "8k",
       "task_file": "tasks/task_006.md",
       "created_at": "2026-07-10T16:59:36.076122",
-      "updated_at": "2026-07-10T16:59:36.076132",
+      "updated_at": "2026-07-12T23:06:35.818937",
       "dependencies": [
         "task_002",
         "task_003"

@@ -54,14 +54,19 @@ src/entity.rs(追加 impl)。EntitySnapshot{coords,slice_dims,num_slices} 全栈
 
 <!-- 标记完成前，请提供以下证据： -->
 
-- [ ] **实现证明**: 简要说明如何实现
-- [ ] **测试验证**: 如何验证功能正常（测试步骤/截图/命令输出）
-- [ ] **影响范围**: 是否影响其他功能
+- [x] **实现证明**: entity.rs 追加 EntitySnapshot(全栈分配) + impl Entity{apply_delta_singlethreaded(写 ring[head%CAP]+head++，head-tail>=CAP panic), query_state(深拷贝基态→回放 ring[tail..head] 中 ts<=query 的 delta，slice=mask.trailing_zeros()→对每切面 Duchi 投影)}。为满足「查询无堆分配」，重构 simplex.rs：抽 duchi_inplace 核心 + 新增 project_onto_simplex_inplace(栈 scratch [f32;K_MAX])，project_onto_simplex(Vec) 改为薄封装（task_003 行为不变）。DeltaEvent 加 #[derive(Clone,Copy)] 以支持环数组初始化。
+- [x] **测试验证**: `cargo test state_query` → 7 passed（含 <500ns 无delta、<2μs 100delta、环溢出 panic、早/晚查询边界、slice_mask 定位）；全套 22 passed；clippy 无告警；fmt 通过。
+- [x] **影响范围**: simplex.rs 重构对外 API 兼容（task_003 测试不变）；entity.rs 追加方法不破坏布局（task_002 断言仍绿）。下游级联/网络层可复用 query_state。
 
 ### 测试步骤
-1. 
-2. 
-3. 
+1. `cargo test state_query` → 7/7 ok
+2. `cargo clippy --all-targets` → 无告警
+3. `cargo fmt --check` → exit 0
 
 ### 验证结果
-<!-- 粘贴验证截图、命令输出或测试结果 -->
+- 无delta查询 <500ns（实测远低，空环仅栈拷贝）
+- 100 delta 回放净0→[0.5,0.5] 正确，<2μs
+- 环填满 1024 → 第 1024 次 panic（catch_unwind 捕获）
+- 早查询(50<100)→基态；晚查询(MAX)→回放全部+投影
+- slice_mask=1<<2 → 切面2 [1.0,0.5]→投影→[0.75,0.25]
+- 查询路径零堆分配（EntitySnapshot 栈分配 + 投影栈 scratch）

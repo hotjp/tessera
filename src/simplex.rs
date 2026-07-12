@@ -14,28 +14,57 @@ use crate::constants::{K_MAX, MAX_SLICES};
 /// # NaN
 /// 排序使用 `partial_cmp().unwrap_or(Equal)`，NaN 视为相等——**调用方须保证输入无 NaN**，
 /// 否则结果未定义（SPEC 假设坐标为有限值）。
-pub fn project_onto_simplex(v: &[f32], k: usize) -> Vec<f32> {
-    let k = k.min(v.len());
+/// Duchi 投影核心：对 `buf[..k]` 原地投影，使用 `scratch` 作排序缓冲（长度 ≥ k）。
+///
+/// 先把 `buf[..k]` 复制进 `scratch` 再排序，故 `buf` 既作输入又作输出（原地安全）。
+fn duchi_inplace(buf: &mut [f32], k: usize, scratch: &mut [f32]) {
+    let k = k.min(buf.len()).min(scratch.len());
     if k == 0 {
-        return Vec::new();
+        return;
     }
-
-    // 降序拷贝
-    let mut u: Vec<f32> = v[..k].to_vec();
-    u.sort_by(|a, b| b.partial_cmp(a).unwrap_or(core::cmp::Ordering::Equal));
+    scratch[..k].copy_from_slice(&buf[..k]);
+    scratch[..k].sort_by(|a, b| b.partial_cmp(a).unwrap_or(core::cmp::Ordering::Equal));
 
     // 找 rho：最后一个满足 u[j] - (cumsum-1)/(j+1) > 0 的下标；theta 为对应阈值
     let mut cumsum = 0.0f32;
     let mut theta = 0.0f32;
-    for (j, &u_j) in u.iter().enumerate() {
+    for (j, &u_j) in scratch[..k].iter().enumerate() {
         cumsum += u_j;
         let t = (cumsum - 1.0) / (j as f32 + 1.0);
         if u_j - t > 0.0 {
             theta = t; // 持续覆盖，最终为 rho 处的阈值
         }
     }
+    for b in buf[..k].iter_mut() {
+        *b = (*b - theta).max(0.0);
+    }
+}
 
-    v[..k].iter().map(|&vi| (vi - theta).max(0.0)).collect()
+/// 将 `v` 的前 `k` 维投影到标准概率单纯形（`Σ=1, xᵢ≥0`）。
+///
+/// - 输入可为任意实数（含负数、>1），**不假设已归一化**。
+/// - 输出保持 `k` 维；退化（投影为 0）的维度**不移除**，仅置 0。
+/// - 复杂度 O(k log k)，由排序主导。
+///
+/// # NaN
+/// 排序使用 `partial_cmp().unwrap_or(Equal)`，NaN 视为相等——**调用方须保证输入无 NaN**，
+/// 否则结果未定义（SPEC 假设坐标为有限值）。
+pub fn project_onto_simplex(v: &[f32], k: usize) -> Vec<f32> {
+    let k = k.min(v.len());
+    let mut out: Vec<f32> = v[..k].to_vec();
+    let mut scratch: Vec<f32> = vec![0.0; k];
+    duchi_inplace(&mut out, k, &mut scratch);
+    out
+}
+
+/// 原地投影 `buf[..k]`，**无堆分配**（栈 scratch `[f32; K_MAX]`）。
+///
+/// 供热路径查询（[`crate::entity::Entity::query_state`]）使用：坐标行 `k ≤ K_MAX`。
+/// 若 `k > K_MAX`，截断到 `K_MAX`（debug 构建断言）。
+pub fn project_onto_simplex_inplace(buf: &mut [f32], k: usize) {
+    debug_assert!(k <= K_MAX, "project_onto_simplex_inplace: k ({k}) > K_MAX");
+    let mut scratch = [0.0f32; K_MAX];
+    duchi_inplace(buf, k.min(K_MAX), &mut scratch);
 }
 
 /// 计算两个坐标矩阵的 Frobenius 距离，仅统计每切面前 `slice_dims[s]` 项。

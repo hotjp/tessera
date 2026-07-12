@@ -1,0 +1,82 @@
+{
+  "task_id": "task_001",
+  "template": "task",
+  "score": 100,
+  "max_score": 100,
+  "checks": [
+    {
+      "score": 100,
+      "issues": [],
+      "suggestions": [],
+      "stats": {
+        "total_functions": 0,
+        "documented_functions": 0,
+        "function_coverage": "100.0%",
+        "total_classes": 0,
+        "documented_classes": 0,
+        "class_coverage": "100.0%"
+      },
+      "passed": true
+    },
+    {
+      "score": 100,
+      "issues": [],
+      "suggestions": [],
+      "stats": {
+        "total_lines": 0,
+        "files_checked": 0
+      },
+      "passed": true
+    },
+    {
+      "score": 100,
+      "issues": [],
+      "suggestions": [],
+      "stats": {},
+      "passed": true
+    },
+    {
+      "score": 80,
+      "issues": [
+        {
+          "type": "missing_readme",
+          "severity": "medium",
+          "message": "项目缺少 README.md"
+        }
+      ],
+      "suggestions": [
+        "建议添加 README.md 说明项目用途"
+      ],
+      "stats": {
+        "has_readme": false,
+        "has_gitignore": true,
+        "has_src": true,
+        "has_tests": false
+      },
+      "passed": true
+    },
+    {
+      "score": 100,
+      "issues": [],
+      "suggestions": [],
+      "stats": {
+        "test_files": 0,
+        "code_files": 0,
+        "test_ratio": "0.0%"
+      },
+      "passed": true
+    }
+  ],
+  "failed_required": [],
+  "issues": [
+    {
+      "type": "missing_readme",
+      "severity": "medium",
+      "message": "项目缺少 README.md"
+    }
+  ],
+  "suggestions": [
+    "建议添加 README.md 说明项目用途"
+  ],
+  "timestamp": "2026-07-12T22:36:19.768495"
+}

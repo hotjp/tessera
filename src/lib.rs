@@ -6,4 +6,9 @@
 //! - 唯一现行规范：[`docs/SIGMA4_SPEC_v1_1.md`](../docs/SIGMA4_SPEC_v1_1.md)
 //! - 覆盖性决策：[`docs/DECISIONS.md`](../docs/DECISIONS.md)（与 SPEC 冲突时以此为准）
 //!
-//! 本文件为脚手架（task_001），不含业务代码。
+//! 模块按 SPEC §3 逐步落地：
+//! - `constants`：编译期常量（内存预算与拓扑边界）
+//! - `entity`：Entity / DeltaEvent / SteadyState / Relation 内存布局
+
+pub mod constants;
+pub mod entity;

@@ -54,14 +54,16 @@ cargo init --lib(根目录)或 cargo new --lib 后合并;Cargo.toml name=sigma4-
 
 <!-- 标记完成前，请提供以下证据： -->
 
-- [ ] **实现证明**: 简要说明如何实现
-- [ ] **测试验证**: 如何验证功能正常（测试步骤/截图/命令输出）
-- [ ] **影响范围**: 是否影响其他功能
+- [x] **实现证明**: cargo init 等价手建——Cargo.toml(name=sigma4-engine, edition=2021, dev-dep criterion) + .gitignore + src/lib.rs(仅入口文档) + rust-toolchain.toml(钉 nightly-2026-07-11 + rust-src/rustfmt/clippy，ADR-001)。安装 rustup 后 build 通过。
+- [x] **测试验证**: `cargo build` → `Finished dev profile ... in 6.14s`；crate 名 `sigma4-engine`；`git log` → 首个 commit `64d20ee` 含 docs/；`git status` 干净无未跟踪文件。
+- [x] **影响范围**: 仅脚手架，无业务代码，不阻塞后续任务（task_002+ 依赖本基线 commit 作回滚锚点）。
 
 ### 测试步骤
-1. 
-2. 
-3. 
+1. `cargo build` 成功编译空 lib crate（工具链文件触发 rustup 安装 nightly-2026-07-11）
+2. `git log --oneline -1` 显示 `64d20ee chore: scaffold sigma4-engine + baseline docs (task_001, T0)`
+3. `git status --short` 工作树干净
 
 ### 验证结果
-<!-- 粘贴验证截图、命令输出或测试结果 -->
+- `cargo build`: `Finished \`dev\` profile [unoptimized + debuginfo] target(s) in 6.14s`
+- LRA 质量检查: 得分 100/100（迭代 0/7，提前完成）
+- 基线 commit: `64d20ee`（含 docs/ + LRA 任务库 + 脚手架；.DS_Store/.claude//target/LRA运行时 已 gitignore）

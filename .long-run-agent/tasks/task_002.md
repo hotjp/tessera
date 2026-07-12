@@ -53,14 +53,18 @@ src/constants.rs + src/entity.rs。仅数据结构与 #[cfg(test)] 布局断言,
 
 <!-- 标记完成前，请提供以下证据： -->
 
-- [ ] **实现证明**: 简要说明如何实现
-- [ ] **测试验证**: 如何验证功能正常（测试步骤/截图/命令输出）
-- [ ] **影响范围**: 是否影响其他功能
+- [x] **实现证明**: src/constants.rs(MAX_SLICES=16/K_MAX=8/MAX_ENTITIES=65536/DELTA_RING_CAPACITY=1024) + src/entity.rs(Entity repr(C,align64)/DeltaEvent repr(C,packed)/SteadyState/Relation repr(C))。字段顺序严格按需求，无 String/Vec，valid_from/until 用 i64，name_ptr 用 *const u8。坐标语义 [切面][端点]。lib.rs 挂 pub mod constants/entity。
+- [x] **测试验证**: `cargo test entity_layout` → 6 passed；clippy 无告警；cargo fmt --check 通过。
+- [x] **影响范围**: 纯新增布局类型，无方法，不改既有行为；task_003(query/apply_delta)/task_004+(依赖这些类型)向后兼容。
 
 ### 测试步骤
-1. 
-2. 
-3. 
+1. `cargo test entity_layout` → 6/6 ok
+2. `cargo clippy --all-targets` → 无告警
+3. `cargo fmt --check` → exit 0
 
 ### 验证结果
-<!-- 粘贴验证截图、命令输出或测试结果 -->
+- Entity align=64, size=17024(≤65536)，header 偏移 id@0/valid_from@8/valid_until@16/coordinates@24(repr(C) 确定)
+- DeltaEvent size=16, align=1(packed)
+- SteadyState size=10, align=2
+- Relation repr(C) 可构造，align=8(含 i64)
+- LRA 质量检查：测试通过 + lint 通过 + 验收满足（set completed 时自动跑）

@@ -1,12 +1,12 @@
-//! Σ⁴-Engine 边界审计测试 - A4 输入健壮性
+//! Tessera 边界审计测试 - A4 输入健壮性
 //!
 //! 探测协议帧解析与 CSV 数据加载对不可信输入的处理。
 //! 目标：拒绝畸形输入应返回 Err/None，不应 panic（DoS 防护）。
 
-use sigma4_engine::cascade::CascadeResult;
-use sigma4_engine::entity::DeltaEvent;
-use sigma4_engine::loader;
-use sigma4_engine::protocol::{
+use tessera::cascade::CascadeResult;
+use tessera::entity::DeltaEvent;
+use tessera::loader;
+use tessera::protocol::{
     decode_cascade_results, decode_cascade_run, decode_state_update, encode_cascade_run,
     encode_cascade_results, encode_state_update, Frame, FrameError, FrameType, MAX_FRAME_LEN,
 };

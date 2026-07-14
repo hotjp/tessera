@@ -1,4 +1,4 @@
-//! Σ⁴-Engine 复杂示例（虚构）：系统级联风险压力测试。
+//! Tessera 复杂示例（虚构）：系统级联风险压力测试。
 //!
 //! 场景：某量化巨头（北极星宏观基金）遭遇 $50B 同步赎回潮 → 冲击沿
 //! 流动性做市 / 因子共振 / 主经纪商信用 三条链级联传导。
@@ -7,8 +7,8 @@
 //! 产出三种截然不同的系统性风险判定。** 脆性实体在此充当「临界点门控」——
 //! 未突破阈值时快速衰减（甚至剪枝、切断下游传播），突破后置信度透传 1.0（标记为系统级关键节点）。
 
-use sigma4_engine::cascade::{cascade, EntityStateView};
-use sigma4_engine::matrix::CascadeMatrix;
+use tessera::cascade::{cascade, EntityStateView};
+use tessera::matrix::CascadeMatrix;
 
 /// 8 个虚构资本主体（原型化命名）。
 const NAMES: [&str; 8] = [
@@ -123,7 +123,7 @@ fn run(label: &str, config: &str, matrix: &CascadeMatrix) {
 fn main() {
     let matrix = build_matrix();
     println!("╔══════════════════════════════════════════════════════════╗");
-    println!("║  Σ⁴-Engine 系统级联风险压力测试（虚构场景）              ║");
+    println!("║  Tessera 系统级联风险压力测试（虚构场景）              ║");
     println!("╚══════════════════════════════════════════════════════════╝");
     println!("冲击源 ：北极星宏观基金(#0) 遭遇 $50B 同步赎回，首发满强度信号");
     println!("拓扑   ：8 实体 / 7 条传导边 / 最多 5 跳 / 置信度剪枝阈值 θ = 0.20");

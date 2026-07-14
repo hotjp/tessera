@@ -1,4 +1,4 @@
-//! Σ⁴-Engine 舆情研判示例（虚构）：负面爆料在 KOL/社区网络的级联传导。
+//! Tessera 舆情研判示例（虚构）：负面爆料在 KOL/社区网络的级联传导。
 //!
 //! 对标 `systemic_risk_demo.rs`（金融版）—— 同构的「同一拓扑 + 同一冲击，
 //! 仅改变关键节点画像 → 三种判定」对比，但领域换成舆情研判，展示引擎的领域无关性。
@@ -10,8 +10,8 @@
 //! 未达点燃阈值时快速衰减（甚至剪枝、切断向大众的传导），突破后置信度透传 1.0
 //! （被标记为舆情风暴的引爆节点）。
 
-use sigma4_engine::cascade::{cascade, EntityStateView};
-use sigma4_engine::matrix::CascadeMatrix;
+use tessera::cascade::{cascade, EntityStateView};
+use tessera::matrix::CascadeMatrix;
 
 /// 8 个虚构舆情主体（原型化命名）。
 const NAMES: [&str; 8] = [
@@ -126,7 +126,7 @@ fn run(label: &str, config: &str, matrix: &CascadeMatrix) {
 fn main() {
     let matrix = build_matrix();
     println!("╔══════════════════════════════════════════════════════════╗");
-    println!("║  Σ⁴-Engine 舆情研判级联压力测试（虚构场景）             ║");
+    println!("║  Tessera 舆情研判级联压力测试（虚构场景）             ║");
     println!("║  对标 systemic_risk_demo.rs（金融版）—— 同构、领域不同  ║");
     println!("╚══════════════════════════════════════════════════════════╝");
     println!("冲击源 ：匿名爆料源(#0) 发布品牌质量负面帖，首发满强度信号");

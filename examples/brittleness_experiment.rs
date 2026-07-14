@@ -9,8 +9,8 @@
 //! 生产引擎零改动；本 harness 只调用 public API：`spmv_csr`、`CascadeMatrix::from_edges`、
 //! `EntityStateView`、`CascadeResult`。
 
-use sigma4_engine::cascade::{CascadeResult, EntityStateView};
-use sigma4_engine::matrix::{spmv_csr, CascadeMatrix};
+use tessera::cascade::{CascadeResult, EntityStateView};
+use tessera::matrix::{spmv_csr, CascadeMatrix};
 
 // ───────────────────────── 变体参数 ─────────────────────────
 
@@ -473,7 +473,7 @@ fn run_s3() {
 
 fn main() {
     println!("╔══════════════════════════════════════════════════════════╗");
-    println!("║   Σ⁴-Engine 脆性语义现实性实验（5 变体 × 3 场景）        ║");
+    println!("║   Tessera 脆性语义现实性实验（5 变体 × 3 场景）        ║");
     println!("║   不改生产引擎；vendor src/cascade.rs 私有逻辑分叉变体   ║");
     println!("╚══════════════════════════════════════════════════════════╝");
     println!("θ = 0.20，max_hops = 5（与 systemic_risk_demo.rs 一致）");

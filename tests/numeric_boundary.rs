@@ -1,9 +1,9 @@
-//! Σ⁴-Engine 数值/数学边界审计测试套件 (A1: Numeric/Math Correctness)
+//! Tessera 数值/数学边界审计测试套件 (A1: Numeric/Math Correctness)
 //!
 //! 本测试套件验证 Duchi 单纯形投影、帕累托约束和 SpMV 的数值边界场景。
 //! 包含 NaN/Inf、空向量、负值、大动态范围、k 越界、SIMD 一致性等场景。
 
-use sigma4_engine::{
+use tessera::{
     constraint::{Constraint, ConstraintKind, pareto_project},
     matrix::{CascadeMatrix, spmv_csr, spmv_csr_scalar},
     simplex::{frobenius_distance, project_onto_simplex, project_onto_simplex_inplace, SimplexCodec},

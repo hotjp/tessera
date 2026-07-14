@@ -1,13 +1,18 @@
 [package]
-name = "sigma4-engine"
+name = "tessera"
 version = "0.1.0"
 edition = "2021"
-description = "Σ⁴-Engine: deterministic microsecond sparse state cascade inference engine"
+description = "Tessera: deterministic μs-level sparse threshold-cascade simulator (Rust)"
 license = "MIT OR Apache-2.0"
 rust-version = "1.99.0"
+repository = "https://github.com/hotjp/tessera"
+homepage = "https://hotjp.github.io/tessera/"
+readme = "README.md"
+keywords = ["cascade", "graph", "simulation", "simd", "network-science"]
+categories = ["science", "simulation"]
 
 [lib]
-name = "sigma4_engine"
+name = "tessera"
 path = "src/lib.rs"
 
 # 基准测试（后续 task 启用，目前仅声明 dev-dep）

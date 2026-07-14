@@ -6,11 +6,11 @@
 //! - MAX_ENTITIES=65_536
 //! - DELTA_RING_CAPACITY=1024
 
-use sigma4_engine::entity::{DeltaEvent, Entity};
-use sigma4_engine::matrix::CascadeMatrix;
-use sigma4_engine::cascade::cascade;
-use sigma4_engine::cascade::EntityStateView;
-use sigma4_engine::constraint::{Constraint, ConstraintKind, pareto_project};
+use tessera::entity::{DeltaEvent, Entity};
+use tessera::matrix::CascadeMatrix;
+use tessera::cascade::cascade;
+use tessera::cascade::EntityStateView;
+use tessera::constraint::{Constraint, ConstraintKind, pareto_project};
 
 // ============================================================================
 // Entity::new 边界测试
@@ -233,7 +233,7 @@ fn spmv_csr_x_length_mismatch_panics() {
     let m = CascadeMatrix::from_edges(3, &edges);
     let x = vec![1.0f32]; // 太短
     let mut y = vec![0.0f32; 3];
-    sigma4_engine::matrix::spmv_csr(&x, &m, &mut y);
+    tessera::matrix::spmv_csr(&x, &m, &mut y);
 }
 
 #[test]
@@ -243,7 +243,7 @@ fn spmv_csr_y_shorter_than_n_is_silent() {
     let m = CascadeMatrix::from_edges(3, &edges);
     let x = vec![1.0f32, 2.0, 3.0];
     let mut y = vec![0.0f32]; // 太短
-    sigma4_engine::matrix::spmv_csr(&x, &m, &mut y);
+    tessera::matrix::spmv_csr(&x, &m, &mut y);
     // 只写了 y[0]，y[1], y[2] 被忽略
     assert_eq!(y.len(), 1);
     assert!((y[0] - 1.0).abs() < 1e-6); // 0.5 * 2.0 = 1.0
@@ -263,7 +263,7 @@ fn spmv_csr_invalid_col_idx_panics() {
     };
     let x = vec![1.0f32, 2.0, 3.0];
     let mut y = vec![0.0f32; 3];
-    sigma4_engine::matrix::spmv_csr(&x, &m, &mut y);
+    tessera::matrix::spmv_csr(&x, &m, &mut y);
 }
 
 #[test]
@@ -272,7 +272,7 @@ fn spmv_csr_empty_matrix() {
     let m = CascadeMatrix::from_edges(0, &[]);
     let x: Vec<f32> = vec![];
     let mut y: Vec<f32> = vec![];
-    sigma4_engine::matrix::spmv_csr(&x, &m, &mut y);
+    tessera::matrix::spmv_csr(&x, &m, &mut y);
     assert_eq!(y.len(), 0);
 }
 

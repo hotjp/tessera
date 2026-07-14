@@ -1,4 +1,4 @@
-//! Σ⁴-Engine 性能/延迟边界审计（A5）。
+//! Tessera 性能/延迟边界审计（A5）。
 //!
 //! 测量 SPEC 性能目标：
 //! - 状态写入 < 1μs
@@ -9,9 +9,9 @@
 //! 使用 `std::time::Instant` 直接测量，避免 criterion 依赖。
 //! 断言使用宽松容差（10× SPEC）避免 CI 抖动；实际测量值打印供分析。
 
-use sigma4_engine::cascade::{cascade, EntityStateView};
-use sigma4_engine::entity::{DeltaEvent, Entity};
-use sigma4_engine::matrix::{spmv_csr, spmv_csr_scalar, CascadeMatrix};
+use tessera::cascade::{cascade, EntityStateView};
+use tessera::entity::{DeltaEvent, Entity};
+use tessera::matrix::{spmv_csr, spmv_csr_scalar, CascadeMatrix};
 use std::hint::black_box;
 use std::time::Instant;
 

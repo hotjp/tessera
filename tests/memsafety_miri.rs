@@ -1,4 +1,4 @@
-//! Memory safety and concurrency tests for Σ⁴-Engine.
+//! Memory safety and concurrency tests for Tessera.
 //!
 //! A3 audit: focus on Entity Send/Sync bounds, SPSC assumptions,
 //! and concurrent access patterns. Run with:
@@ -8,10 +8,10 @@
 
 #![allow(dead_code)]
 
-use sigma4_engine::entity::{DeltaEvent, Entity};
-use sigma4_engine::server::Engine;
-use sigma4_engine::matrix::CascadeMatrix;
-use sigma4_engine::cascade::EntityStateView;
+use tessera::entity::{DeltaEvent, Entity};
+use tessera::server::Engine;
+use tessera::matrix::CascadeMatrix;
+use tessera::cascade::EntityStateView;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::path::PathBuf;

@@ -50,6 +50,10 @@ fn apply_constraints(
         .iter()
         .filter(|c| matches!(c.kind, ConstraintKind::LowerBound))
     {
+        // F3 fix: check constraint value is finite before applying
+        if !c.value.is_finite() {
+            continue;
+        }
         let (s, e) = (c.slice as usize, c.endpoint as usize);
         if s < MAX_SLICES && e < K_MAX {
             raw[s][e] = raw[s][e].max(c.value);
@@ -60,6 +64,10 @@ fn apply_constraints(
         .iter()
         .filter(|c| matches!(c.kind, ConstraintKind::UpperBound))
     {
+        // F3 fix: check constraint value is finite before applying
+        if !c.value.is_finite() {
+            continue;
+        }
         let (s, e) = (c.slice as usize, c.endpoint as usize);
         if s < MAX_SLICES && e < K_MAX {
             raw[s][e] = raw[s][e].min(c.value);

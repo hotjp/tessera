@@ -25,15 +25,15 @@ pub struct CascadeMatrix {
 impl CascadeMatrix {
     /// 从边列表 `(from, to, weight, time_lag_us)` 构建 CSR（行 = from）。
     ///
-    /// `from >= n` 的非法边被丢弃；同行的边按输入顺序排列。
+    /// **Panics**：若 `from >= n` 或 `to >= n`，构造期 panic（构造期 fail-fast 优于运行时越界）。
     pub fn from_edges(n: u32, edges: &[(u32, u32, f32, u32)]) -> Self {
         let n_us = n as usize;
         // 1. 计数每行非零元
         let mut row_ptr = vec![0u32; n_us + 1];
-        for &(from, _, _, _) in edges {
-            if (from as usize) < n_us {
-                row_ptr[from as usize + 1] += 1;
-            }
+        for &(from, to, _, _) in edges {
+            assert!(from < n, "from_edges: edge from={} out of range for n={}", from, n);
+            assert!(to < n, "from_edges: edge to={} out of range for n={}", to, n);
+            row_ptr[from as usize + 1] += 1;
         }
         // 2. 前缀和 → row_ptr
         for i in 0..n_us {
@@ -179,15 +179,16 @@ mod spmv {
     }
 
     #[test]
-    fn invalid_from_edge_dropped() {
-        // from >= n 的边被丢弃
-        let edges = vec![(0, 1, 0.5, 0), (5, 1, 9.0, 0)]; // 5 >= 2
+    fn valid_edges_all_accepted() {
+        // 两条合法边都被保留（非法边已在 from_edges 构造期被拦截）
+        let edges = vec![(0, 1, 0.5, 0), (1, 0, 0.25, 0)];
         let m = CascadeMatrix::from_edges(2, &edges);
-        assert_eq!(m.col_idx.len(), 1); // 仅 1 条合法边
+        assert_eq!(m.col_idx.len(), 2); // 两条合法边都保留
         let x = vec![1.0f32, 2.0];
         let mut y = vec![0.0f32; 2];
         spmv_csr_scalar(&x, &m, &mut y);
         assert!((y[0] - 1.0).abs() < 1e-6); // 0.5*2.0
+        assert!((y[1] - 0.25).abs() < 1e-6); // 0.25*1.0
     }
 
     #[test]

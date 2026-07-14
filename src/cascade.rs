@@ -90,7 +90,7 @@ fn apply_hop(
 
 /// 级联推理。
 ///
-/// - `initial`：初始冲击信号（长度按 `matrix.n` 截断/补 0）。
+/// - `initial`：初始冲击信号（长度应 ≥ `matrix.n`；不足时尾部填 0 容错，debug 下断言）。
 /// - 每跳 `spmv_csr` 传播；脆性分支见 [`confidence_for`]。
 /// - `confidence < theta` 剪枝置 0。
 /// - 返回所有命中实体（首次命中跳数 + 累积时滞 + 最佳置信度）。
@@ -107,6 +107,7 @@ pub fn cascade(
     let n = matrix.n as usize;
     let mut cur: Vec<f32> = initial.to_vec();
     cur.resize(n, 0.0);
+    debug_assert!(initial.len() >= n, "cascade: initial.len()={} < matrix.n={}", initial.len(), matrix.n);
     let mut next: Vec<f32> = vec![0.0; n];
     let mut raw_buf: Vec<f32> = vec![0.0; n];
     let mut first_hop: Vec<Option<u32>> = vec![None; n];

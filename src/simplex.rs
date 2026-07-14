@@ -26,17 +26,18 @@ fn duchi_inplace(buf: &mut [f32], k: usize, scratch: &mut [f32]) {
     scratch[..k].sort_by(|a, b| b.partial_cmp(a).unwrap_or(core::cmp::Ordering::Equal));
 
     // 找 rho：最后一个满足 u[j] - (cumsum-1)/(j+1) > 0 的下标；theta 为对应阈值
-    let mut cumsum = 0.0f32;
-    let mut theta = 0.0f32;
+    // F2 fix: use f64 for cumsum and theta to avoid catastrophic cancellation with large values
+    let mut cumsum: f64 = 0.0;
+    let mut theta = 0.0f64;
     for (j, &u_j) in scratch[..k].iter().enumerate() {
-        cumsum += u_j;
-        let t = (cumsum - 1.0) / (j as f32 + 1.0);
-        if u_j - t > 0.0 {
+        cumsum += u_j as f64;
+        let t = (cumsum - 1.0) / (j as f64 + 1.0);
+        if (u_j as f64) - t > 0.0 {
             theta = t; // 持续覆盖，最终为 rho 处的阈值
         }
     }
     for b in buf[..k].iter_mut() {
-        *b = (*b - theta).max(0.0);
+        *b = ((*b as f64 - theta).max(0.0)) as f32;
     }
 }
 
@@ -51,7 +52,10 @@ fn duchi_inplace(buf: &mut [f32], k: usize, scratch: &mut [f32]) {
 /// 否则结果未定义（SPEC 假设坐标为有限值）。
 pub fn project_onto_simplex(v: &[f32], k: usize) -> Vec<f32> {
     let k = k.min(v.len());
-    let mut out: Vec<f32> = v[..k].to_vec();
+    // F1 fix: sanitize non-finite values at entry
+    let sanitized: Vec<f32> = v[..k].iter().map(|&x| if x.is_finite() { x } else { 0.0 }).collect();
+
+    let mut out: Vec<f32> = sanitized.to_vec();
     let mut scratch: Vec<f32> = vec![0.0; k];
     duchi_inplace(&mut out, k, &mut scratch);
     out
@@ -63,8 +67,15 @@ pub fn project_onto_simplex(v: &[f32], k: usize) -> Vec<f32> {
 /// 若 `k > K_MAX`，截断到 `K_MAX`（debug 构建断言）。
 pub fn project_onto_simplex_inplace(buf: &mut [f32], k: usize) {
     debug_assert!(k <= K_MAX, "project_onto_simplex_inplace: k ({k}) > K_MAX");
+    // F1 fix: sanitize non-finite values in-place at entry
+    let k_actual = k.min(buf.len()).min(K_MAX);
+    for x in buf[..k_actual].iter_mut() {
+        if !x.is_finite() {
+            *x = 0.0;
+        }
+    }
     let mut scratch = [0.0f32; K_MAX];
-    duchi_inplace(buf, k.min(K_MAX), &mut scratch);
+    duchi_inplace(buf, k_actual, &mut scratch);
 }
 
 /// 计算两个坐标矩阵的 Frobenius 距离，仅统计每切面前 `slice_dims[s]` 项。

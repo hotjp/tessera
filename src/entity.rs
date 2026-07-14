@@ -5,7 +5,7 @@
 //!
 //! 坐标二维数组语义：`coordinates[切面行][端点列]`。
 
-use crate::constants::{DELTA_RING_CAPACITY, K_MAX, MAX_SLICES};
+use crate::constants::{DELTA_RING_CAPACITY, K_MAX, MAX_ENTITIES, MAX_SLICES};
 
 /// 实体：一个资本主体（宏观基金 / 主权基金 / 家族网络 / 央企集团等）。
 ///
@@ -136,7 +136,11 @@ pub struct EntitySnapshot {
 
 impl Entity {
     /// 构造零初始化实体（坐标与增量环清零；仅设 id / entity_type / num_slices；valid_until=MAX）。
+    ///
+    /// **Panics**：若 `id >= MAX_ENTITIES` 或 `num_slices > MAX_SLICES`，构造期 panic。
     pub fn new(id: u32, entity_type: u8, num_slices: u8) -> Self {
+        assert!(id < MAX_ENTITIES as u32, "Entity::new: id={} 超过 MAX_ENTITIES={}", id, MAX_ENTITIES);
+        assert!(usize::from(num_slices) <= MAX_SLICES, "Entity::new: num_slices={} 超过 MAX_SLICES={}", num_slices, MAX_SLICES);
         Self {
             id,
             entity_type,

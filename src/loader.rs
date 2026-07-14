@@ -4,8 +4,14 @@
 //! 按分类 A-E 用**确定性先验权重表**推导各切面（权力拓扑 / 动态模式 / 认知可达 / 级联响应）
 //! 的初始单纯形坐标（**非 LLM**，基于可审计公式，可回测）。中国主体独立标记 `ownership_type`。
 //!
-//! 数据集无引号 / 无内嵌 ASCII 逗号（字段用中文标点），故手写 `splitn(7, ',')` 解析，
-//! 零外部依赖（符合系统自包含目标）。
+//! # 数据格式约束
+//!
+//! 本加载器为性能采用简化 `splitn(7, ',')` 解析，零外部依赖（符合系统自包含目标）。
+//! **不支持 RFC 4180 引号转义**。字段必须满足以下约束：
+//!
+//! - 字段不得包含未转义的双引号（`"`）
+//! - 字段不得包含 ASCII 逗号（`,`）
+//! - 如字段含逗号或引号，该行将被跳过并输出警告（宁可丢失数据也不静默损坏）
 
 use crate::constants::{K_MAX, MAX_SLICES};
 use crate::entity::{Entity, SteadyState};
@@ -84,6 +90,15 @@ pub struct EntityPool {
 }
 
 /// 从 CSV 文本加载实体池。
+///
+/// # 数据格式约束
+///
+/// 本函数使用简化的 `splitn(7, ',')` 解析器，**不支持 RFC 4180 引号转义**。
+/// 字段必须满足：
+/// - 不含未转义的双引号（`"`）
+/// - 不含 ASCII 逗号（`,`）
+///
+/// 违反约束的行将被跳过并输出警告到 stderr。
 pub fn load_from_text(csv: &str) -> EntityPool {
     let csv = csv.strip_prefix('\u{feff}').unwrap_or(csv); // 去 BOM
     let mut entities = Vec::new();
@@ -97,10 +112,28 @@ pub fn load_from_text(csv: &str) -> EntityPool {
         if line.is_empty() {
             continue;
         }
+
+        // 检测引号：简化解析器不支持引号转义
+        if line.contains('"') {
+            eprintln!("警告：CSV 第 {} 行含引号，简化解析器不支持引号转义，已跳过", i + 1);
+            continue;
+        }
+
         let parts: Vec<&str> = line.splitn(7, ',').collect();
         if parts.len() < 7 {
             continue;
         }
+
+        // 检测逗号溢出：splitn(7) 后第 7 列仍含逗号，说明字段内含逗号
+        let seventh_has_comma = parts[6].contains(',');
+        if seventh_has_comma {
+            eprintln!(
+                "警告：CSV 第 {} 行字段内含逗号（>7 列），简化解析器不支持，已跳过",
+                i + 1
+            );
+            continue;
+        }
+
         let org = parts[0].trim().to_string();
         let cat = category_code(parts[6].trim()).unwrap_or(4); // 未知 → E
 

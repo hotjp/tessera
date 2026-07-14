@@ -75,9 +75,10 @@
   .viz-card .cap .live::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--accent);
     box-shadow:0 0 8px var(--accent);animation:pulse 1.4s infinite}
   svg.cascade{width:100%;height:auto;display:block}
-  svg.cascade .edge{stroke:rgba(148,163,184,.22);stroke-width:1.4;fill:none;transition:stroke .4s}
-  svg.cascade .edge.lit{stroke:url(#edgegrad);stroke-width:2.2;filter:drop-shadow(0 0 4px rgba(34,211,238,.6))}
-  svg.cascade .node{fill:#1a2542;stroke:rgba(148,163,184,.3);stroke-width:1.6;transition:all .4s}
+  svg.cascade .edge{stroke:rgba(148,163,184,.22);stroke-width:1.4;fill:none;transition:stroke .35s,stroke-width .35s,filter .35s}
+  svg.cascade .edge.lit{stroke:url(#edgegrad);stroke-width:2.2;stroke-dasharray:8 8;animation:edgeflow .7s linear infinite;filter:drop-shadow(0 0 4px rgba(34,211,238,.55))}
+  @keyframes edgeflow{to{stroke-dashoffset:-32}}
+  svg.cascade .node{fill:#1a2542;stroke:rgba(148,163,184,.3);stroke-width:1.6;transition:fill .4s,stroke .4s,filter .4s;transform-box:fill-box;transform-origin:center}
   svg.cascade .node.lit{fill:url(#nodegrad);stroke:var(--accent);filter:drop-shadow(0 0 6px rgba(34,211,238,.7))}
   svg.cascade .node.breach{fill:url(#breachgrad);stroke:var(--accent3);
     filter:drop-shadow(0 0 12px rgba(244,114,182,.9));animation:breach .7s ease-in-out infinite}
@@ -234,7 +235,7 @@
           <circle class="node" id="n3" cx="180" cy="240" r="17"/><text class="nlabel" x="180" y="240">3</text>
           <circle class="node" id="n4" cx="320" cy="80"  r="17"/><text class="nlabel" x="320" y="80">4</text>
           <circle class="node" id="n5" cx="320" cy="220" r="17"/><text class="nlabel" x="320" y="220">5</text>
-          <circle class="node" id="n6" cx="320" cy="150" r="19"/><text class="nlabel" x="320" y="150">6</text>
+          <circle class="node" id="n6" cx="320" cy="150" r="17"/><text class="nlabel" x="320" y="150">6</text>
           <circle class="node" id="n7" cx="440" cy="150" r="17"/><text class="nlabel" x="440" y="150">7</text>
         </svg>
         <div class="viz-legend">
@@ -426,7 +427,8 @@ gᵢ(r,k) = <span class="k">1.0</span>          若脆性且 r ≥ τᵢ      <s
 </footer>
 
 <script>
-  // 级联传播动画：逐跳点亮节点与边，n6 为脆性突破节点
+  // 级联传播动画：边先亮（信号沿边流动）→ 节点后亮（信号到达）；重置时从终端向源端逐跳熄灭
+  // n6 为脆性突破节点（粉色脉冲，原地缩放）
   (function(){
     const hops = [
       {nodes:['n0'], edges:[]},
@@ -434,27 +436,44 @@ gᵢ(r,k) = <span class="k">1.0</span>          若脆性且 r ≥ τᵢ      <s
       {nodes:['n4','n5','n6'], edges:['e-1-4','e-2-5','e-3-6']},
       {nodes:['n7'], edges:['e-6-7']}
     ];
-    let step = 0;
-    function light(arr, cls){ arr.forEach(id=>{ const el=document.getElementById(id); if(el) el.classList.add(cls); }); }
-    function tick(){
+    const $ = id => document.getElementById(id);
+    const on  = (a,c)=>a.forEach(id=>{const e=$(id);if(e)e.classList.add(c);});
+    const off = (a,c)=>a.forEach(id=>{const e=$(id);if(e)e.classList.remove(c);});
+    let t;
+    const wait = (fn,ms)=>{ t=setTimeout(fn,ms); };
+
+    function propagate(step){
       if(step < hops.length){
         const h = hops[step];
-        light(h.nodes, 'lit');
-        light(h.edges, 'lit');
-        if(h.nodes.includes('n6')){ const n6=document.getElementById('n6'); if(n6) n6.classList.add('breach'); }
-        step++;
-        setTimeout(tick, 680);
+        on(h.edges,'lit');                                   // 边先通电：信号沿边流动
+        wait(()=>{                                           // 稍后节点才收到信号
+          on(h.nodes,'lit');
+          if(h.nodes.includes('n6')){ const n6=$('n6'); if(n6) n6.classList.add('breach'); }
+          wait(()=>propagate(step+1), 560);
+        }, 230);
       } else {
-        setTimeout(()=>{
-          document.querySelectorAll('svg.cascade .lit,svg.cascade .breach').forEach(e=>e.classList.remove('lit','breach'));
-          step = 0;
-          setTimeout(tick, 520);
-        }, 1300);
+        wait(recede, 1200);                                  // 全亮保持，再从终端回收
       }
     }
-    // 尊重 prefers-reduced-motion
-    if(!matchMedia('(prefers-reduced-motion: reduce)').matches){ setTimeout(tick, 600); }
-    else { hops.flat().forEach(h=>{}); light(['n0'],'lit'); }
+    function recede(){
+      let i = hops.length;
+      (function back(){
+        if(i > 0){
+          i--;
+          const h = hops[i];                                 // 终端→源端逐跳熄灭
+          off(h.nodes,'lit'); off(h.nodes,'breach'); off(h.edges,'lit');
+          wait(back, 150);
+        } else {
+          wait(()=>propagate(0), 500);
+        }
+      })();
+    }
+
+    if(matchMedia('(prefers-reduced-motion: reduce)').matches){
+      on(['n0'],'lit');                                      // 静态：仅显示源点
+    } else {
+      wait(()=>propagate(0), 500);
+    }
   })();
 </script>
 
